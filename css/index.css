@@ -3764,7 +3764,7 @@ h1.page-title + .tag-cloud-list {
   width: 100%;
 }
  {
-  include: './_load_style/scarecrow';
+  include: './_load_style/image';
 }
 #pagination .pagination {
   margin-top: 20px;
