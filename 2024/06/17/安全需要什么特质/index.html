@@ -289,7 +289,7 @@ author.innerHTML = result.data.origin.author + '《' + result.data.origin.title 
     if(!countELement) return
     twikoo.getCommentsCount({
       envId: 'https://pax-pq-pax-pq.hf.space',
-      region: 'ap-shanghai',
+      region: 'i',
       urls: [window.location.pathname],
       includeReply: false
     }).then(res => {
@@ -303,11 +303,11 @@ author.innerHTML = result.data.origin.author + '《' + result.data.origin.title 
     twikoo.init(Object.assign({
       el: '#twikoo-wrap',
       envId: 'https://pax-pq-pax-pq.hf.space',
-      region: 'ap-shanghai',
+      region: 'i',
       onCommentLoaded: () => {
         btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
       }
-    }, null))
+    }, {"lang":"zh-CN"}))
 
     
   }
