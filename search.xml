@@ -4,6 +4,31 @@
   
     
     <entry>
+      <title>对于SQL注入原理的学习</title>
+      <link href="/2024/06/27/%E5%AF%B9%E4%BA%8ESQL%E6%B3%A8%E5%85%A5%E5%8E%9F%E7%90%86%E7%9A%84%E5%AD%A6%E4%B9%A0/"/>
+      <url>/2024/06/27/%E5%AF%B9%E4%BA%8ESQL%E6%B3%A8%E5%85%A5%E5%8E%9F%E7%90%86%E7%9A%84%E5%AD%A6%E4%B9%A0/</url>
+      
+        <content type="html"><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="\css\APlayer.min.css"><script src="\js\APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="\js\Meting.min.js"></script><h1 id="0x00-前言"><a href="#0x00-前言" class="headerlink" title="0x00 前言"></a>0x00 前言</h1><hr><p>写下本文的直接原因是拜读了庆尘大佬的文章（<a href="https://mp.weixin.qq.com/s?__biz=Mzg3Mzg3OTU4OQ==&mid=2247490588&idx=1&sn=b3a407b4198dad7d44a16838a4482dfb&chksm=ced81d56f9af9440dcfef78fa46b2e80a8b36b5559f77369f8a1747b8008809745bffc83219c&mpshare=1&scene=23&srcid=0627f44PAdtKwLySIQom2uGM&sharer_shareinfo=9088a8b0cb537eab6d4069134e7a75ce&sharer_shareinfo_first=9088a8b0cb537eab6d4069134e7a75ce#rd">对SQL注入漏洞原理的思考 (qq.com)</a>，这也是本文的参考文章。推荐大家读读大佬的文章，感受大佬浅显易懂的文笔下的深邃思想。</p><h1 id="0x01-信任输入"><a href="#0x01-信任输入" class="headerlink" title="0x01 信任输入"></a>0x01 信任输入</h1><h2 id="信任问题"><a href="#信任问题" class="headerlink" title="信任问题"></a>信任问题</h2><p><em>安全问题的本质就是信任问题</em></p><p>例如对一个网站的开发来说</p><ul><li>信任普通用户的输入——前台漏洞</li><li>信任管理员用户的输入——后台漏洞</li><li>信任离线升级&#x2F;在线升级&#x2F;自动化升级&#x2F;升级包——供应链攻击</li><li>不信任任何输入——信任代码逻辑——逻辑漏洞</li></ul><p><strong>有时候信任是可以被提升的——越权。</strong></p><h2 id="防御核心"><a href="#防御核心" class="headerlink" title="防御核心"></a>防御核心</h2><p><em>对应的安全方案有很多，但都可以简化为</em></p><blockquote><p><strong>输入</strong>——检测是否存在风险——输出</p></blockquote><p>黑客往往是从输入入手。所以我们重点关心的问题也就是<strong>如何处理信任与输入的关系</strong></p><h1 id="0x02-控制流和数据流"><a href="#0x02-控制流和数据流" class="headerlink" title="0x02 控制流和数据流"></a>0x02 控制流和数据流</h1><blockquote><p>可以将程序员的代码分割为两个部分</p><ul><li>一部分是控制代码走向的<strong>控制流</strong>代码</li><li>另一部分是用来<strong>被</strong>展示，<strong>被</strong>存储，<strong>被</strong>流转的<strong>数据流</strong>(包括输入的数据和程序员设定的数据)</li></ul></blockquote><p><strong>被</strong>，是被动，说明了数据流的数据不应该具有主动性。说实在一点，外来的数据不能影响内部的控制程序。一旦数据流可以入侵到控制流，那么漏洞也随之而生。</p><h1 id="0x03-以SQL注入为例"><a href="#0x03-以SQL注入为例" class="headerlink" title="0x03 以SQL注入为例"></a>0x03 以SQL注入为例</h1><h2 id="薄弱的程序"><a href="#薄弱的程序" class="headerlink" title="薄弱的程序"></a>薄弱的程序</h2><p>先看一段简单的代码：</p><pre><code class="highlight php"><span class="meta">&lt;?php</span>    <span class="variable">$db</span> = <span class="title function_ invoke__">init_db</span>();    <span class="variable">$username</span> = <span class="variable">$_GET</span>[<span class="string">&#x27;username&#x27;</span>];    <span class="variable">$db</span>-&gt;<span class="title function_ invoke__">query</span>(<span class="string">&quot;select * from users where username = &#x27;<span class="subst">$username</span>&#x27;&quot;</span>);<span class="meta">?&gt;</span></code></pre><p>这是一个最简单的SQL注入代码，再看看payload：</p><pre><code class="highlight plaintext">username=admin&#x27; and 1=1 #username=&#x27; or 1=1 #</code></pre><p>让我们理理逻辑：</p><pre><code class="highlight plaintext">输入——php字符变量——SQL语句——数据库</code></pre><p>很好，这就搭建起了输入和后端的关系。</p><h2 id="背后的原理"><a href="#背后的原理" class="headerlink" title="背后的原理"></a>背后的原理</h2><p>程序员希望我们输入的是正常的数据，也就是程序员期望得到一个不能影响控制流的输入流。</p><p>但是我们的payload通过绕过闭合，成功使数据流入侵了控制流。</p><p>正如上文所说：</p><p>​一旦数据流可以入侵到控制流，那么漏洞也随之而生。</p><blockquote><ul><li>这里就引出了代码审计的两个核心</li><li>能否让数据流逃逸到控制流</li><li>业务逻辑可能产生的点在哪</li></ul></blockquote><h1 id="0x04-预编译"><a href="#0x04-预编译" class="headerlink" title="0x04 预编译"></a>0x04 预编译</h1><p>以PHP的预编译为例：</p><pre><code class="highlight php"><span class="comment">// 创建连接 </span><span class="variable">$conn</span> = <span class="keyword">new</span> <span class="title function_ invoke__">mysqli</span>(<span class="variable">$servername</span>, <span class="variable">$username</span>, <span class="variable">$password</span>, <span class="variable">$dbname</span>); <span class="comment">// 获取用户输入 </span><span class="variable">$user_input</span> = <span class="variable">$_GET</span>[<span class="string">&#x27;user_input&#x27;</span>];    <span class="comment">// 使用预编译语句和参数绑定来防止 SQL 注入 </span><span class="variable">$stmt</span> = <span class="variable">$conn</span>-&gt;<span class="title function_ invoke__">prepare</span>(<span class="string">&quot;SELECT * FROM users WHERE username = ?&quot;</span>);  <span class="variable">$stmt</span>-&gt;<span class="title function_ invoke__">bind_param</span>(<span class="string">&quot;s&quot;</span>, <span class="variable">$user_input</span>);  <span class="variable">$stmt</span>-&gt;<span class="title function_ invoke__">execute</span>();  <span class="variable">$result</span> = <span class="variable">$stmt</span>-&gt;<span class="title function_ invoke__">get_result</span>();</code></pre><p>预编译为什么能防止SQL注入</p><blockquote><p>预编译语句通过将SQL<strong>查询语句</strong>与<strong>参数</strong>分开，使用占位符来代表参数，然后将用户输入的数据绑定到占位符上，确保了<strong>输入数据被正确地解释为字符串而不是SQL代码</strong>。因此，无论用户输入什么数据，都不会影响原始查询的结构和意图，从而有效地防止了SQL注入攻击。</p></blockquote><p>让我们再理理思路：</p><ul><li>为什么需要使用预编译——因为要防止SQL注入</li><li>为什么要防止SQL注入——防止数据流入侵到控制流</li><li>怎样防止数据流入侵到控制流——将用户的输入限制到输入流</li></ul><p>归根结底，还是要限制用户的输入，也就是回到了<strong>信任</strong>的问题上</p><h1 id="0x05-结语"><a href="#0x05-结语" class="headerlink" title="0x05 结语"></a>0x05 结语</h1><p>我写的这篇文章抄袭居多，思路生硬，但是仍然写出来，是因为学习安全需要对问题本质上的思考，哲学上的思考。不写，不得深思。</p><p>另外，我也很希望读到能上升到思想与哲学的文章，再次感谢庆尘大佬。</p>]]></content>
+      
+      
+      <categories>
+          
+          <category> SQL注入 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> 原理 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>再见，郊野山！</title>
       <link href="/2024/06/22/%E5%86%8D%E8%A7%81%EF%BC%8C%E9%83%8A%E9%87%8E%E5%B1%B1%EF%BC%81/"/>
       <url>/2024/06/22/%E5%86%8D%E8%A7%81%EF%BC%8C%E9%83%8A%E9%87%8E%E5%B1%B1%EF%BC%81/</url>
